@@ -835,66 +835,74 @@
         }
 
         .upload-area {
-            border: 1px solid var(--dark-border);
-            background: var(--dark-card);
-            padding: 80px 48px;
+            border: 3px dashed rgba(200,163,61,0.8);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 60px 48px;
             text-align: center;
             cursor: pointer;
             transition: all 0.4s;
             position: relative;
             overflow: hidden;
+            border-radius: 16px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .upload-area::before {
             content: '';
             position: absolute;
             inset: 0;
-            background:
-                linear-gradient(135deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%),
-                linear-gradient(225deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%);
-            background-size: 20px 20px;
+            background: radial-gradient(ellipse at 50% 50%, rgba(200,163,61,0.08) 0%, transparent 70%);
         }
 
         .upload-area:hover {
             border-color: var(--gold);
-            box-shadow: 0 0 60px rgba(200,163,61,0.12);
+            background: rgba(0,0,0,0.7);
+            box-shadow: 0 0 80px rgba(200,163,61,0.25), 0 0 30px rgba(200,163,61,0.15);
+            transform: scale(1.02);
         }
 
         .upload-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 32px;
-            border: 2px solid var(--dark-border);
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 24px;
+            border: 3px solid var(--gold);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+            background: rgba(200,163,61,0.1);
         }
 
         .upload-area:hover .upload-icon {
-            border-color: var(--gold);
-            box-shadow: 0 0 20px var(--gold-glow);
+            border-color: #fff;
+            background: rgba(200,163,61,0.25);
+            box-shadow: 0 0 30px var(--gold-glow);
+            transform: scale(1.1);
         }
 
         .upload-icon svg {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             stroke: var(--gold);
         }
 
         .upload-title {
             font-family: var(--serif);
-            font-size: 24px;
-            color: var(--heading);
-            margin-bottom: 12px;
+            font-size: 26px;
+            color: #fff;
+            margin-bottom: 10px;
             position: relative;
+            font-weight: 700;
         }
 
         .upload-desc {
             font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 32px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 24px;
             position: relative;
         }
 
