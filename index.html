@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FORGED — Custom Forged Wheels with AI Try-On</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            /* DEFAULT — Palette B "Golden Hour Drive" (light) */
+            --gold: #c8823d;
+            --gold-light: #dd9852;
+            --gold-glow: rgba(200,130,61,0.32);
+            --accent: #2d3e52;
+            --dark: #1c1410;
+            --dark-2: #d6ba85;
+            --dark-card: #dcc08b;
+            --dark-border: #ae8f5f;
+            --text: #211811;
+            --text-muted: #6d5740;
+            --warm-bg: linear-gradient(160deg, #e5c487 0%, #dab672 50%, #e0bb7a 100%);
+            --floor-gradient: linear-gradient(180deg, transparent 0%, rgba(70,52,32,0.10) 70%, rgba(200,130,61,0.16) 100%);
+            --serif: 'Playfair Display', Georgia, serif;
+            --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            /* Semantic tokens (work in both themes) */
+            --heading: #211811;
+            --nav-bg: transparent;
+            --nav-bg-scrolled: rgba(218,182,114,0.95);
+            --shadow-strong: rgba(50,34,20,0.32);
+            --shadow-medium: rgba(50,34,20,0.22);
+            --shadow-soft: rgba(50,34,20,0.12);
+            --card-fade: rgba(110,88,54,0.14);
+        }
+
+        [data-theme="dark"] {
+            /* DARK theme — original warm premium */
+            --gold: #c8a33d;
+            --gold-light: #e0c05a;
+            --gold-glow: rgba(200,163,61,0.3);
+            --accent: #e8b94a;
+            --dark: #1a1a24;
+            --dark-2: #1e1e2a;
+            --dark-card: #22222e;
+            --dark-border: #32323e;
+            --text: #ece9e4;
+            --text-muted: #9a98a3;
+            --warm-bg: linear-gradient(160deg, #1c1c28 0%, #221f1c 45%, #1f1c22 100%);
+            --floor-gradient: linear-gradient(180deg, transparent 0%, rgba(200,163,61,0.04) 70%, rgba(224,192,90,0.08) 100%);
+            --heading: #fff;
+            --nav-bg: transparent;
+            --nav-bg-scrolled: rgba(18,18,24,0.95);
+            --shadow-strong: var(--shadow-strong);
+            --shadow-medium: var(--shadow-medium);
+            --shadow-soft: var(--shadow-soft);
+            --card-fade: var(--card-fade);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--warm-bg);
+            background-attachment: fixed;
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 0 48px;
+            height: 72px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--nav-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: background 0.4s;
+        }
+
+        /* Nav links white on dark showroom, then normal on scroll */
+        nav .nav-links a,
+        nav .nav-cta {
+            color: #fff;
+            border-color: rgba(255,255,255,0.3);
+            transition: all 0.4s;
+        }
+        nav.scrolled {
+            background: var(--nav-bg-scrolled);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--dark-border);
+        }
+        nav.scrolled .nav-links a,
+        nav.scrolled .nav-cta {
+            color: var(--text);
+            border-color: var(--dark-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+            transition: filter 0.3s;
+        }
+
+        /* Dark mode: invert dark logo to light */
+        [data-theme="dark"] .logo img {
+            filter: invert(1) brightness(1.8);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            padding: 10px 22px;
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            background: rgba(0,0,0,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--gold-glow), 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(200,163,61,0.06);
+        }
+
+        .nav-links a:hover::before { opacity: 1; }
+
+        .nav-links a:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--dark-border);
+            background: transparent;
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: rotate(15deg);
+        }
+
+        .theme-toggle .icon-sun { display: none; }
+        .theme-toggle .icon-moon { display: block; }
+        [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+        [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+        .nav-cta {
+            padding: 10px 24px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--dark);
+            background: var(--gold);
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--gold-light);
+            box-shadow: 0 4px 20px var(--gold-glow);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            height: 100vh;
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            margin-top: -2px; /* seamless with showroom */
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 75% 50%, rgba(224,192,90,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 15% 85%, rgba(200,163,61,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 40% at 70% 95%, rgba(244,201,108,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 50% 0%, rgba(180,130,50,0.05) 0%, transparent 60%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(200,180,140,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200,180,140,0.025) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 70%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 48px;
+            max-width: 720px;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 28px;
+            position: relative;
+            padding-left: 48px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--gold-glow);
+        }
+
+        .hero-tag::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 32px;
+            height: 1px;
+            background: var(--gold);
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(42px, 5.5vw, 68px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            color: var(--heading);
+            margin-bottom: 28px;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .hero-desc {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-muted);
+            max-width: 480px;
+            margin-bottom: 48px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: var(--dark);
+        }
+
+        .btn-gold:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--gold-glow);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--dark-border);
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: var(--heading);
+        }
+
+        /* Hero wheel visual */
+        .hero-visual {
+            position: absolute;
+            right: -5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 55vw;
+            max-width: 720px;
+            aspect-ratio: 1;
+            z-index: 1;
+        }
+
+        /* Store floor — shadow under the wheel */
+        .hero-visual::before {
+            content: '';
+            position: absolute;
+            bottom: 6%;
+            left: 12%;
+            right: 12%;
+            height: 50px;
+            background: radial-gradient(ellipse 60% 100% at 50% 0%, var(--shadow-strong) 0%, var(--shadow-soft) 30%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(8px);
+            animation: shadowBreathe 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        /* Podium lighting */
+        .hero-visual::after {
+            content: '';
+            position: absolute;
+            bottom: -5%;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(224,192,90,0.15) 0%, rgba(200,163,61,0.05) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: podiumGlow 8s ease-in-out infinite;
+        }
+
+        /* Container around wheel for parallax */
+        .wheel-wrap {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            perspective: 1800px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Automatic left-right rotation — как будто крутишь диск в руках */
+        .wheel-yaw {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: wheelYaw 14s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+        }
+
+        /* Real turn: left → pause → right → pause → влево */
+        @keyframes wheelYaw {
+            0%   { transform: rotateY(-22deg); }
+            8%   { transform: rotateY(-22deg); }  /* держим взгляд влево */
+            42%  { transform: rotateY(22deg); }
+            58%  { transform: rotateY(22deg); }   /* держим взгляд вправо */
+            92%  { transform: rotateY(-22deg); }
+            100% { transform: rotateY(-22deg); }
+        }
+
+        .wheel-main {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter:
+                drop-shadow(0 0 140px rgba(224,192,90,0.38))
+                drop-shadow(0 0 70px rgba(200,163,61,0.28))
+                drop-shadow(0 40px 60px var(--shadow-strong))
+                drop-shadow(0 80px 40px var(--shadow-soft));
+            animation: wheelFloat 8s ease-in-out infinite, wheelBreath 5s ease-in-out infinite;
+            transform-origin: center 55%;
+            will-change: transform, filter;
+        }
+
+        /* Rotating light вокруг диска — имитация движущегося прожектора */
+        .wheel-spotlight {
+            position: absolute;
+            inset: -15%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(244,201,108,0.12) 60deg,
+                rgba(224,192,90,0.25) 90deg,
+                rgba(244,201,108,0.12) 120deg,
+                transparent 180deg,
+                transparent 360deg
+            );
+            animation: spotlightRotate 12s linear infinite;
+            opacity: 0.7;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(40px);
+        }
+
+        /* Light flash которая проходит по диску */
+        .wheel-shine {
+            position: absolute;
+            top: 10%;
+            left: -30%;
+            width: 40%;
+            height: 80%;
+            background: linear-gradient(
+                105deg,
+                transparent 0%,
+                transparent 40%,
+                rgba(255,235,180,0.15) 48%,
+                rgba(255,245,200,0.3) 50%,
+                rgba(255,235,180,0.15) 52%,
+                transparent 60%,
+                transparent 100%
+            );
+            transform: skewX(-15deg);
+            animation: shineSweep 5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: screen;
+            border-radius: 50%;
+        }
+
+        /* Subtle floating motion — без дёрганий */
+        @keyframes wheelFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Wheel breathing effect (лёгкое "вдох-выдох") */
+        @keyframes wheelBreath {
+            0%, 100% { filter:
+                drop-shadow(0 0 140px rgba(224,192,90,0.38))
+                drop-shadow(0 0 70px rgba(200,163,61,0.28))
+                drop-shadow(0 40px 60px var(--shadow-strong))
+                drop-shadow(0 80px 40px var(--shadow-soft)); }
+            50% { filter:
+                drop-shadow(0 0 180px rgba(224,192,90,0.48))
+                drop-shadow(0 0 90px rgba(200,163,61,0.35))
+                drop-shadow(0 40px 60px var(--shadow-strong))
+                drop-shadow(0 80px 40px var(--shadow-soft)); }
+        }
+
+        /* Shadow breathes in sync */
+        @keyframes shadowBreathe {
+            0%, 100% { transform: scaleX(1) scaleY(1); opacity: 0.8; }
+            40% { transform: scaleX(0.88) scaleY(0.9); opacity: 0.55; }
+        }
+
+        /* Light podium pulsates */
+        @keyframes podiumGlow {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Свет-прожектор вращается */
+        @keyframes spotlightRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Glint slides across the wheel — раз в 5 секунд */
+        @keyframes shineSweep {
+            0%, 100% { left: -30%; opacity: 0; }
+            40% { opacity: 0; }
+            50% { opacity: 1; }
+            60% { opacity: 1; }
+            70% { opacity: 0; }
+            100% { left: 120%; opacity: 0; }
+        }
+
+        .wheel-glow {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle, rgba(200,163,61,0.2) 0%, rgba(200,163,61,0.05) 40%, transparent 65%);
+            opacity: 0.6;
+            animation: glowPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            padding: 48px;
+            border-top: 1px solid var(--dark-border);
+            border-bottom: 1px solid var(--dark-border);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        .stat:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: var(--dark-border);
+        }
+
+        .stat-number {
+            font-family: var(--serif);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* ===== SECTION COMMON ===== */
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-tag {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(28px, 3.5vw, 42px);
+            font-weight: 700;
+            color: var(--heading);
+            line-height: 1.2;
+        }
+
+        /* ===== CATALOG GRID ===== */
+        .catalog {
+            padding: 120px 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .catalog-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 20px;
+            border: 1px solid var(--dark-border);
+            background: transparent;
+            color: var(--dark-text-dim);
+            border-radius: 24px;
+            cursor: pointer;
+            font-family: var(--sans);
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .filter-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .wheel-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .wheel-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            group: true;
+        }
+
+        .wheel-card:hover {
+            border-color: rgba(200,163,61,0.4);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px var(--shadow-soft), 0 0 40px rgba(200,163,61,0.08);
+        }
+
+        .wheel-card-img {
+            aspect-ratio: 1;
+            background: #f5f0e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        [data-theme="dark"] .wheel-card-img {
+            background: #1a1a24;
+        }
+
+        .wheel-card-img svg,
+        .wheel-card-img img {
+            width: 85%;
+            height: 85%;
+            object-fit: contain;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            animation: cardWheelYaw 16s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+            transform-style: preserve-3d;
+        }
+
+        .wheel-card:nth-child(2) .wheel-card-img img { animation-delay: -2s; }
+        .wheel-card:nth-child(3) .wheel-card-img img { animation-delay: -4s; }
+        .wheel-card:nth-child(4) .wheel-card-img img { animation-delay: -6s; }
+        .wheel-card:nth-child(5) .wheel-card-img img { animation-delay: -8s; }
+        .wheel-card:nth-child(6) .wheel-card-img img { animation-delay: -10s; }
+
+        .wheel-card:hover .wheel-card-img svg,
+        .wheel-card:hover .wheel-card-img img {
+            animation-play-state: paused;
+            transform: rotate(-8deg) scale(1.1);
+        }
+
+        @keyframes cardWheelYaw {
+            0%   { transform: rotateY(-18deg) scale(1); }
+            8%   { transform: rotateY(-18deg) scale(1); }
+            42%  { transform: rotateY(18deg) scale(1); }
+            58%  { transform: rotateY(18deg) scale(1); }
+            92%  { transform: rotateY(-18deg) scale(1); }
+            100% { transform: rotateY(-18deg) scale(1); }
+        }
+
+        .wheel-card-img::after {
+            content: none;
+        }
+
+        .wheel-card-info {
+            padding: 24px;
+        }
+
+        .wheel-card-name {
+            font-family: var(--serif);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--heading);
+            margin-bottom: 6px;
+        }
+
+        .wheel-card-spec {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .wheel-card-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .price-note {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .card-arrow {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .card-arrow svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            transition: stroke 0.3s;
+        }
+
+        .wheel-card:hover .card-arrow {
+            border-color: var(--gold);
+            background: var(--gold);
+        }
+
+        .wheel-card:hover .card-arrow svg {
+            stroke: var(--dark);
+        }
+
+        /* ===== PROCESS ===== */
+        .process {
+            padding: 120px 48px;
+            background: var(--dark-2);
+        }
+
+        .process-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+        }
+
+        .step {
+            padding: 48px 32px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .step:hover {
+            background: #22222c;
+            border-color: rgba(200,163,61,0.3);
+            box-shadow: 0 8px 30px rgba(200,163,61,0.06);
+        }
+
+        .step-num {
+            font-family: var(--serif);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--dark-border);
+            margin-bottom: 24px;
+            transition: color 0.3s;
+        }
+
+        .step:hover .step-num { color: var(--gold); }
+
+        .step h4 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--heading);
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+
+        /* ===== UPLOAD / SHOWROOM ===== */
+        .showroom {
+            padding: 120px 48px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .upload-area {
+            border: 1px solid var(--dark-border);
+            background: var(--dark-card);
+            padding: 80px 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(135deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%),
+                linear-gradient(225deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%);
+            background-size: 20px 20px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 60px rgba(200,163,61,0.12);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 32px;
+            border: 2px solid var(--dark-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover .upload-icon {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px var(--gold-glow);
+        }
+
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--gold);
+        }
+
+        .upload-title {
+            font-family: var(--serif);
+            font-size: 24px;
+            color: var(--heading);
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .upload-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .upload-formats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .format-badge {
+            padding: 6px 16px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid var(--dark-border);
+        }
+
+        /* ===== CONFIGURATOR ===== */
+        #configurator {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .wheel-picker {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .picker-title {
+            font-family: var(--serif);
+            font-size: 18px;
+            color: var(--heading);
+        }
+
+        .picker-reset {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-family: var(--sans);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--dark-border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .picker-reset:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .picker-wheels {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .picker-wheels::-webkit-scrollbar { height: 4px; }
+        .picker-wheels::-webkit-scrollbar-track { background: var(--dark); }
+        .picker-wheels::-webkit-scrollbar-thumb { background: var(--dark-border); border-radius: 2px; }
+
+        .picker-wheel-item {
+            flex-shrink: 0;
+            width: 90px;
+            height: 90px;
+            background: var(--dark);
+            border: 2px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .picker-wheel-item:hover,
+        .picker-wheel-item.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 16px var(--gold-glow);
+        }
+
+        .picker-wheel-item svg {
+            width: 60px;
+            height: 60px;
+        }
+
+        .picker-wheel-item .pw-name {
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .picker-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .size-control input[type="range"] {
+            width: 160px;
+            accent-color: var(--gold);
+            height: 4px;
+        }
+
+        .picker-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .canvas-area {
+            position: relative;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            margin-bottom: 16px;
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-area img#carPhoto {
+            max-width: 100%;
+            max-height: 600px;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .wheel-overlay {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            filter: drop-shadow(0 4px 12px var(--shadow-medium));
+            transition: filter 0.2s;
+        }
+
+        .wheel-overlay:active { cursor: grabbing; }
+
+        .wheel-overlay:hover {
+            filter: drop-shadow(0 4px 20px rgba(200,163,61,0.4));
+        }
+
+        .wheel-overlay svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .wheel-overlay .remove-wheel {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #e44;
+            color: var(--heading);
+            border: none;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .wheel-overlay:hover .remove-wheel { opacity: 1; }
+
+        .config-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* ===== FULLSCREEN SHOWROOM ===== */
+        .showroom-section {
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            position: relative;
+            background: #dab672;
+        }
+        [data-theme="dark"] .showroom-section {
+            background: #1c1c28;
+        }
+
+        .showroom-room {
+            position: relative;
+            perspective: 1200px;
+            perspective-origin: 50% 40%;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .showroom-bg {
+            position: absolute;
+            inset: 0;
+            background: url('generated/showroom/bg_variant_3.jpg') center/cover no-repeat;
+            z-index: 0;
+            filter: brightness(0.8);
+        }
+
+        /* Gradient fade at bottom — seamless immersive transition */
+        .showroom-room::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(218,182,114,0.05) 15%,
+                rgba(218,182,114,0.15) 30%,
+                rgba(218,182,114,0.35) 45%,
+                rgba(218,182,114,0.55) 58%,
+                rgba(218,182,114,0.75) 70%,
+                rgba(218,182,114,0.9) 82%,
+                #dab672 95%,
+                #dab672 100%
+            );
+            z-index: 5;
+            pointer-events: none;
+        }
+        [data-theme="dark"] .showroom-room::after {
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(28,28,40,0.05) 15%,
+                rgba(28,28,40,0.15) 30%,
+                rgba(28,28,40,0.35) 45%,
+                rgba(28,28,40,0.55) 58%,
+                rgba(28,28,40,0.75) 70%,
+                rgba(28,28,40,0.9) 82%,
+                #1c1c28 95%,
+                #1c1c28 100%
+            );
+        }
+
+        .showroom-title-overlay {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            padding: 80px 24px 16px;
+        }
+        .showroom-title-overlay .section-tag {
+            color: rgba(255,255,255,0.5);
+        }
+        .showroom-title-overlay .section-title {
+            color: #fff;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+
+        .showroom-wall {
+            position: relative;
+            z-index: 2;
+            padding: 0 40px;
+            transform: rotateX(2deg);
+            transform-style: preserve-3d;
+        }
+
+        .shelf-row {
+            display: flex;
+            justify-content: space-evenly;
+            gap: 12px;
+            padding: 8px 12px;
+        }
+
+        /* 3D shelf ledge with depth */
+        .shelf-ledge {
+            height: 8px;
+            background: linear-gradient(180deg, rgba(160,130,50,0.7) 0%, rgba(80,60,20,0.9) 60%, rgba(40,30,10,0.5) 100%);
+            box-shadow:
+                0 2px 4px rgba(0,0,0,0.6),
+                0 6px 20px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(200,163,61,0.3);
+            margin: 0 8px;
+            border-radius: 0 0 3px 3px;
+            transform: translateZ(10px);
+        }
+
+        .shelf-item {
+            width: 120px;
+            height: 130px;
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            cursor: grab;
+            transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+            user-select: none;
+            padding-bottom: 4px;
+        }
+
+        /* Shadow under the wheel on the shelf */
+        .shelf-item::after {
+            content: '';
+            position: absolute;
+            bottom: 28px;
+            left: 15%;
+            right: 15%;
+            height: 8px;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%);
+            filter: blur(4px);
+            transition: all 0.3s;
+        }
+
+        .shelf-item:hover {
+            transform: translateY(-10px) scale(1.08);
+        }
+
+        .shelf-item:hover::after {
+            bottom: 18px;
+            filter: blur(6px);
+            background: radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%);
+        }
+
+        .shelf-item:active { cursor: grabbing; }
+
+        .shelf-item.picked {
+            opacity: 0.3;
+            transform: scale(0.85);
+        }
+
+        .shelf-item img {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .shelf-item:hover img {
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6)) drop-shadow(0 0 12px rgba(200,163,61,0.2));
+            transform: scale(1.05);
+        }
+
+        /* Price tag — small label under the wheel */
+        .shelf-item .si-price-tag {
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-top: 4px;
+            border: 1px solid rgba(200,163,61,0.2);
+        }
+
+        .shelf-item .si-name {
+            font-family: var(--sans);
+            font-size: 10px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.2;
+        }
+
+        .shelf-item .si-price {
+            font-family: var(--sans);
+            font-size: 11px;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .showroom-dormant .shelf-item {
+            filter: saturate(0.4) brightness(0.7);
+        }
+
+        .showroom-active .shelf-item {
+            filter: none;
+            transition: filter 0.6s ease;
+        }
+
+        /* Fitting stand */
+        .fitting-stand {
+            position: relative;
+            z-index: 3;
+            margin: 16px auto 0;
+            max-width: 700px;
+            min-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(200,163,61,0.15);
+            border-radius: 4px;
+            padding: 24px;
+        }
+
+        .fitting-stand.drop-active {
+            animation: dropPulse 1s ease infinite;
+        }
+
+        @keyframes dropPulse {
+            0%, 100% { box-shadow: none; }
+            50% { box-shadow: 0 0 40px var(--gold-glow), inset 0 0 40px rgba(200,163,61,0.05); }
+        }
+
+        .car-silhouette {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            padding: 20px;
+        }
+
+        .car-silhouette svg {
+            width: 100%;
+            max-width: 650px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 30px rgba(200,163,61,0.12));
+            animation: silhouettePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes silhouettePulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; filter: drop-shadow(0 0 40px rgba(200,163,61,0.2)); }
+        }
+
+        .silhouette-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 40px;
+            border: 2px dashed rgba(200,163,61,0.35);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+            background: rgba(200,163,61,0.06);
+        }
+
+        .silhouette-label:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(200,163,61,0.15);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(200,163,61,0.15);
+        }
+
+        .canvas-area {
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .canvas-area img#carPhoto {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+            filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5));
+        }
+
+        .floor-reflection {
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
+            margin: 0 auto;
+            max-width: 700px;
+        }
+
+        .showroom-controls {
+            position: relative;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 16px 32px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            margin: 0 auto;
+            max-width: 500px;
+        }
+
+        .showroom-controls .size-control {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .showroom-controls .picker-reset {
+            color: rgba(255,255,255,0.5);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* Drag ghost */
+        .drag-ghost {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transition: transform 0.05s linear;
+            filter: drop-shadow(0 8px 24px rgba(200,163,61,0.5));
+        }
+
+        .drag-ghost img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        /* Wheel overlays in showroom */
+        .wheel-overlay {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            filter: drop-shadow(0 4px 12px var(--shadow-medium));
+            transition: filter 0.2s;
+        }
+        .wheel-overlay:active { cursor: grabbing; }
+        .wheel-overlay:hover { filter: drop-shadow(0 4px 20px rgba(200,163,61,0.4)); }
+        .wheel-overlay .remove-wheel {
+            position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+            background: #e44; color: #fff; border: none; border-radius: 50%;
+            font-size: 12px; line-height: 20px; text-align: center; cursor: pointer;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .wheel-overlay:hover .remove-wheel { opacity: 1; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .showroom-section { padding: 80px 16px 40px; }
+            .showroom-room { min-height: 500px; perspective: 800px; }
+            .shelf-row { gap: 12px; flex-wrap: wrap; justify-content: center; }
+            .shelf-item { width: 90px; height: 90px; }
+            .shelf-item img { width: 60px; height: 60px; }
+            .shelf-ledge { margin: 0 16px; }
+            .fitting-stand { min-height: 200px; }
+            .showroom-controls { flex-direction: column; gap: 12px; }
+        }
+
+        /* ===== ORDER POPUP ===== */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .popup-overlay.active { display: flex; }
+
+        .popup {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            max-width: 480px;
+            width: 90%;
+            padding: 48px 40px;
+            position: relative;
+            box-shadow: 0 24px 80px var(--shadow-strong);
+            animation: popupIn 0.3s ease;
+        }
+
+        @keyframes popupIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .popup-close:hover { border-color: var(--gold); color: var(--gold); }
+
+        .popup-title {
+            font-family: var(--serif);
+            font-size: 24px;
+            color: var(--heading);
+            margin-bottom: 8px;
+        }
+
+        .popup-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .popup-product {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 16px;
+            background: rgba(0,0,0,0.1);
+            border: 1px solid var(--dark-border);
+            margin-bottom: 24px;
+        }
+
+        .popup-product img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+        }
+
+        .popup-product-info h4 {
+            font-family: var(--serif);
+            font-size: 16px;
+            color: var(--heading);
+            margin-bottom: 4px;
+        }
+
+        .popup-product-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .popup-product-price {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .popup-divider {
+            border: none;
+            border-top: 1px solid var(--dark-border);
+            margin: 24px 0;
+        }
+
+        .popup-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .popup-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            font-family: var(--sans);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: 1px solid var(--dark-border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .popup-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .popup-btn svg { flex-shrink: 0; }
+
+        .popup-btn.primary {
+            background: var(--gold);
+            color: var(--dark);
+            border-color: var(--gold);
+        }
+
+        .popup-btn.primary:hover {
+            background: var(--gold-light);
+            box-shadow: 0 4px 20px var(--gold-glow);
+        }
+
+        .popup-btn.whatsapp { border-color: #25D366; color: #25D366; }
+        .popup-btn.whatsapp:hover { background: #25D366; color: #fff; }
+
+        .popup-design-hint {
+            margin-top: 24px;
+            padding: 16px;
+            border: 1px dashed var(--dark-border);
+            text-align: center;
+        }
+
+        .popup-design-hint p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .popup-design-hint a {
+            font-size: 12px;
+            color: var(--gold);
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .popup-design-hint a:hover { text-decoration: underline; }
+
+        .popup-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 20px;
+        }
+
+        .popup-badge svg { stroke: var(--gold); }
+
+        /* ===== SHARE POPUP ===== */
+        .share-actions { display: flex; flex-direction: column; gap: 12px; }
+
+        .share-link-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .share-link-box input {
+            flex: 1;
+            padding: 12px 16px;
+            font-family: var(--sans);
+            font-size: 13px;
+            background: rgba(0,0,0,0.1);
+            border: 1px solid var(--dark-border);
+            color: var(--text);
+            outline: none;
+        }
+
+        .share-link-box button {
+            padding: 12px 20px;
+            font-family: var(--sans);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .share-link-box button:hover { background: var(--gold-light); }
+
+        /* ===== FOOTER ===== */
+        footer {
+            border-top: 1px solid var(--dark-border);
+            padding: 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer-brand {
+            font-family: var(--serif);
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover { color: var(--text); }
+
+        .footer-copy {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero-visual { display: none; }
+            .hero-content { max-width: 100%; }
+            .wheel-grid { grid-template-columns: repeat(2, 1fr); }
+            .process-steps { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 24px; }
+            .nav-links { display: none; }
+            .nav-cta { display: none; }
+            .hero-content { padding: 0 24px; }
+            .catalog { padding: 80px 24px; }
+            .wheel-grid { grid-template-columns: 1fr; }
+            .process { padding: 80px 24px; }
+            .process-steps { grid-template-columns: 1fr; }
+            .showroom { padding: 80px 24px; }
+            .upload-area { padding: 48px 24px; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .hero-actions { flex-direction: column; align-items: flex-start; }
+            footer { flex-direction: column; gap: 24px; text-align: center; }
+            .footer-links { flex-wrap: wrap; justify-content: center; }
+        }
+
+        /* ===== SCROLL ANIMATIONS ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <a href="#" class="logo"><img src="logo-sw-auto.png" alt="SW Auto" style="height:40px;width:auto;"></a>
+        <ul class="nav-links">
+            <li><a href="#catalog">Catalog</a></li>
+            <li><a href="#process">How It Works</a></li>
+            <li><a href="#showroom">Try On</a></li>
+        </ul>
+        <div class="nav-right">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+                <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <a href="#showroom" class="nav-cta">Try On</a>
+        </div>
+    </nav>
+
+
+    <!-- SHOWROOM / UPLOAD + CONFIGURATOR -->
+    <section class="showroom-section" id="showroom">
+        <input type="file" id="fileInput" accept="image/*" style="display:none">
+
+        <div class="showroom-room reveal">
+            <!-- AI Background overlay -->
+            <div class="showroom-bg"></div>
+
+            <!-- Title overlay on the showroom -->
+            <div class="showroom-title-overlay">
+                <div class="section-tag" style="color:rgba(255,255,255,0.6);">AI Virtual Showroom</div>
+                <div class="section-title" style="color:#fff;">Upload. Detect. Try On.</div>
+            </div>
+
+            <!-- Shelf wall with wheels -->
+            <div class="showroom-wall">
+                <div class="shelf-row" id="shelfTop"></div>
+                <div class="shelf-ledge"></div>
+                <div class="shelf-row" id="shelfMid"></div>
+                <div class="shelf-ledge"></div>
+                <div class="shelf-row" id="shelfBottom"></div>
+                <div class="shelf-ledge"></div>
+            </div>
+
+            <!-- Fitting stand (car area) -->
+            <div class="fitting-stand" id="fittingStand">
+                <!-- Before upload: silhouette -->
+                <div class="car-silhouette" id="carSilhouette">
+                    <svg viewBox="0 0 700 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Car body -->
+                        <path d="M60 220 L100 220 L110 200 L130 165 L180 120 L230 90 L280 75 L350 70 L420 70 L470 75 L510 90 L550 120 L580 165 L600 200 L610 220 L640 220" stroke="rgba(200,163,61,0.5)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                        <!-- Roof line -->
+                        <path d="M200 100 L240 72 L380 68 L440 72 L490 100" stroke="rgba(200,163,61,0.3)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                        <!-- Windows -->
+                        <path d="M225 95 L255 73 L375 70 L420 73 L465 95" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="rgba(200,163,61,0.04)"/>
+                        <!-- Front wheel -->
+                        <circle cx="175" cy="225" r="38" stroke="rgba(200,163,61,0.4)" stroke-width="2.5" fill="none"/>
+                        <circle cx="175" cy="225" r="24" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="none"/>
+                        <circle cx="175" cy="225" r="6" fill="rgba(200,163,61,0.15)"/>
+                        <!-- Rear wheel -->
+                        <circle cx="535" cy="225" r="38" stroke="rgba(200,163,61,0.4)" stroke-width="2.5" fill="none"/>
+                        <circle cx="535" cy="225" r="24" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="none"/>
+                        <circle cx="535" cy="225" r="6" fill="rgba(200,163,61,0.15)"/>
+                        <!-- Ground line -->
+                        <line x1="40" y1="264" x2="660" y2="264" stroke="rgba(200,163,61,0.15)" stroke-width="1"/>
+                        <!-- Headlight -->
+                        <ellipse cx="115" cy="195" rx="12" ry="8" stroke="rgba(200,163,61,0.25)" stroke-width="1" fill="rgba(200,163,61,0.05)"/>
+                        <!-- Taillight -->
+                        <ellipse cx="605" cy="195" rx="10" ry="8" stroke="rgba(200,163,61,0.25)" stroke-width="1" fill="rgba(200,163,61,0.05)"/>
+                    </svg>
+                    <div class="silhouette-label" id="uploadZone">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span>Upload your car photo</span>
+                        <span style="font-size:11px;opacity:0.5;margin-left:8px;">or drag & drop here</span>
+                    </div>
+                </div>
+
+                <!-- After upload: car photo + overlays -->
+                <div class="canvas-area" id="canvasArea" style="display:none;">
+                    <img id="carPhoto" src="" alt="Your car">
+                </div>
+
+                <!-- Floor reflection -->
+                <div class="floor-reflection"></div>
+            </div>
+
+            <!-- Size control -->
+            <div class="showroom-controls" id="showroomControls" style="display:none;">
+                <label class="size-control">
+                    <span>Wheel size</span>
+                    <input type="range" id="wheelSize" min="40" max="200" value="100">
+                </label>
+                <button class="picker-reset" onclick="resetUpload()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    New photo
+                </button>
+            </div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="config-actions reveal" id="configActions" style="display:none;">
+            <button class="btn btn-ghost" onclick="addWheelOverlay()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add another wheel
+            </button>
+            <button class="btn btn-ghost" onclick="openSharePopup()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Share
+            </button>
+            <button class="btn btn-gold" onclick="openOrderPopup()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                I like this
+            </button>
+        </div>
+    </section>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+
+        <div class="hero-content">
+            <div class="hero-tag">Handcrafted · 30 days delivery</div>
+            <h1>Your Car.<br>Your Wheels <em>in 30 Days</em>.</h1>
+            <p class="hero-desc">Try custom forged wheels on your car photo. Order at a fair price. Get them in 30 days.</p>
+            <div class="hero-actions">
+                <a href="#showroom" class="btn btn-gold">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Photo
+                </a>
+                <a href="#catalog" class="btn btn-ghost">Browse Catalog</a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="wheel-glow"></div>
+            <div class="wheel-spotlight"></div>
+            <div class="wheel-wrap" id="wheelWrap">
+                <div class="wheel-yaw">
+                    <img class="wheel-main" src="generated/hero/02_hero_bronze_concave_nobg.png" alt="Forged luxury wheel" />
+                    <div class="wheel-shine"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat reveal">
+            <div class="stat-number">6061-T6</div>
+            <div class="stat-label">Aerospace aluminum</div>
+        </div>
+        <div class="stat reveal reveal-delay-1">
+            <div class="stat-number">20+</div>
+            <div class="stat-label">Wheel designs</div>
+        </div>
+        <div class="stat reveal reveal-delay-2">
+            <div class="stat-number">14-24"</div>
+            <div class="stat-label">Wheel diameters</div>
+        </div>
+        <div class="stat reveal reveal-delay-3">
+            <div class="stat-number">30</div>
+            <div class="stat-label">Days to deliver</div>
+        </div>
+    </div>
+
+    <!-- CATALOG (Dynamic from catalog.json) -->
+    <section class="catalog" id="catalog">
+        <div class="section-header reveal">
+            <div class="section-tag">Catalog</div>
+            <div class="section-title">Premium Forged Collection</div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="catalog-filters reveal" id="catalogFilters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="monoblock">Monoblock</button>
+            <button class="filter-btn" data-filter="concave">Concave</button>
+            <button class="filter-btn" data-filter="mesh">Mesh</button>
+            <button class="filter-btn" data-filter="split-spoke">Split-Spoke</button>
+            <button class="filter-btn" data-filter="multi-piece">Multi-Piece</button>
+        </div>
+
+        <div class="wheel-grid" id="wheelGrid">
+            <!-- Wheels loaded dynamically from catalog.json -->
+        </div>
+    </section>
+
+    <!-- PROCESS -->
+    <section class="process" id="process">
+        <div class="process-inner">
+            <div class="section-header reveal">
+                <div class="section-tag">How It Works</div>
+                <div class="section-title">From Photo to Forged Wheels</div>
+            </div>
+
+            <div class="process-steps">
+                <div class="step reveal">
+                    <div class="step-num">01</div>
+                    <h4>Upload Your Photo</h4>
+                    <p>Take a side photo of your car. Our AI will automatically detect your wheels and prepare for virtual try-on.</p>
+                </div>
+                <div class="step reveal reveal-delay-1">
+                    <div class="step-num">02</div>
+                    <h4>Choose Your Design</h4>
+                    <p>Browse 20+ forged wheel designs or send your own sketch. Our designer will create a 3D model to match your style.</p>
+                </div>
+                <div class="step reveal reveal-delay-2">
+                    <div class="step-num">03</div>
+                    <h4>Approve the Project</h4>
+                    <p>Get an exact visualization with sizes, finish options and pricing. Make changes if needed.</p>
+                </div>
+                <div class="step reveal reveal-delay-3">
+                    <div class="step-num">04</div>
+                    <h4>Receive Your Wheels</h4>
+                    <p>30-day manufacturing. Forging, CNC machining, painting. Worldwide delivery with warranty.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- DESIGN STUDIO -->
+    <section class="design-studio" id="design-studio" style="padding:120px 48px;max-width:1200px;margin:0 auto;">
+        <div class="section-header reveal">
+            <div class="section-tag">Design Studio</div>
+            <div class="section-title">Can't find what you want? We'll create it.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;" class="reveal">
+            <div>
+                <p style="font-size:16px;line-height:1.8;color:var(--text-muted);margin-bottom:24px;">
+                    Upload a sketch, inspiration photo, or just describe your ideal wheels. Our designers will create a unique 3D visualization for your car.
+                </p>
+                <ul style="list-style:none;margin-bottom:32px;">
+                    <li style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--dark-border);font-size:14px;color:var(--text);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        3D visualization on your car photo
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--dark-border);font-size:14px;color:var(--text);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        2 revision rounds included
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--dark-border);font-size:14px;color:var(--text);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Full specifications (size, offset, PCD)
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--dark-border);font-size:14px;color:var(--text);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <strong style="color:var(--gold);">15% discount</strong>&nbsp;if you order wheels from us
+                    </li>
+                    <li style="display:flex;align-items:center;gap:12px;padding:12px 0;font-size:14px;color:var(--text);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Don't like it? Pay nothing.
+                    </li>
+                </ul>
+                <div style="display:flex;align-items:center;gap:24px;">
+                    <a href="https://buy.stripe.com/eVq00i42W0HcbSW6FbcV202" target="_blank" class="btn btn-gold" style="font-size:13px;">
+                        Order design — €300
+                    </a>
+                    <span style="font-size:24px;font-weight:700;color:var(--gold);font-family:var(--serif);">€300</span>
+                </div>
+                <p style="font-size:11px;color:var(--text-muted);margin-top:12px;">
+                    Risk-free: full refund if the design doesn't work for you
+                </p>
+            </div>
+            <div style="background:var(--dark-card);border:1px solid var(--dark-border);padding:48px;text-align:center;">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1" stroke-linecap="round" style="margin-bottom:24px;opacity:0.6;">
+                    <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
+                </svg>
+                <p style="font-family:var(--serif);font-size:18px;color:var(--heading);margin-bottom:8px;">Your idea — our craftsmanship</p>
+                <p style="font-size:13px;color:var(--text-muted);">Send us a sketch, photo, or even a napkin drawing.<br>We'll bring it to life in metal.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- COLLECTION BANNER -->
+    <section style="padding:80px 48px;border-top:1px solid var(--dark-border);border-bottom:1px solid var(--dark-border);" class="reveal">
+        <div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;">
+            <div>
+                <div class="section-tag" style="margin-bottom:12px;">Ready-Made Collection</div>
+                <div style="font-family:var(--serif);font-size:28px;color:var(--heading);">Looking for ready-made forged wheels?</div>
+                <p style="font-size:14px;color:var(--text-muted);margin-top:8px;">In stock. 2-week delivery. From €1,200 per set.</p>
+            </div>
+            <a href="#" class="btn btn-gold" style="white-space:nowrap;">
+                Browse collection
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- ORDER POPUP -->
+    <div class="popup-overlay" id="orderPopup">
+        <div class="popup">
+            <button class="popup-close" onclick="closePopup('orderPopup')">&times;</button>
+            <div class="popup-title">Great choice!</div>
+            <div class="popup-subtitle">Here's your selection</div>
+
+            <div class="popup-product">
+                <img id="popupWheelImg" src="" alt="Selected wheel">
+                <div class="popup-product-info">
+                    <h4 id="popupWheelName">—</h4>
+                    <p id="popupWheelSpec">20" &times; 9.5" ET35 &middot; 5&times;112</p>
+                    <p id="popupWheelFinish">Finish: Brushed Titanium</p>
+                </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+                <span style="font-size:13px;color:var(--text-muted);">Set of 4 wheels</span>
+                <span class="popup-product-price" id="popupPrice">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px;">
+                <span>Delivery</span><span>30 days</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);">
+                <span>Warranty</span><span>5 years</span>
+            </div>
+
+            <hr class="popup-divider">
+
+            <div class="popup-actions">
+                <a href="mailto:forged@example.com?subject=Wheel%20Order%20Inquiry" class="popup-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Get a quote via email
+                </a>
+                <a href="https://wa.me/34600000000?text=Hi!%20I'm%20interested%20in%20forged%20wheels." target="_blank" class="popup-btn whatsapp">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.264-1.227l-.306-.182-2.862.85.85-2.862-.182-.306A8 8 0 1112 20z"/></svg>
+                    Discuss on WhatsApp
+                </a>
+                <a href="https://buy.stripe.com/eVq00i42W0HcbSW6FbcV202" target="_blank" class="popup-btn primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Order and pay
+                </a>
+            </div>
+
+            <div class="popup-design-hint">
+                <p>Want a custom design? 15% off design + wheels bundle</p>
+                <a href="https://buy.stripe.com/eVq00i42W0HcbSW6FbcV202" target="_blank">Design Studio &rarr;</a>
+            </div>
+
+            <div class="popup-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Secure payment &middot; SSL &middot; Money-back guarantee
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARE POPUP -->
+    <div class="popup-overlay" id="sharePopup">
+        <div class="popup">
+            <button class="popup-close" onclick="closePopup('sharePopup')">&times;</button>
+            <div class="popup-title">Share your result</div>
+            <div class="popup-subtitle">Show friends how it looks</div>
+
+            <div class="share-link-box">
+                <input type="text" id="shareLink" value="https://forged.com/s/demo" readonly>
+                <button onclick="copyShareLink()">Copy</button>
+            </div>
+
+            <div class="share-actions">
+                <a href="#" class="popup-btn whatsapp" onclick="shareWhatsApp()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.264-1.227l-.306-.182-2.862.85.85-2.862-.182-.306A8 8 0 1112 20z"/></svg>
+                    Share via WhatsApp
+                </a>
+                <a href="#" class="popup-btn" onclick="shareEmail()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Share via Email
+                </a>
+                <button class="popup-btn" onclick="downloadSetup()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-brand"><img src="logo-sw-auto.png" alt="SW Auto" style="height:32px;width:auto;opacity:0.7;"></div>
+        <ul class="footer-links">
+            <li><a href="#catalog">Catalog</a></li>
+            <li><a href="#process">How It Works</a></li>
+            <li><a href="#showroom">Try On</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+        <div class="footer-copy">&copy; 2026 SW Auto</div>
+    </footer>
+
+    <script>
+        // Theme toggle (light ↔ dark)
+        (function() {
+            const root = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const saved = localStorage.getItem('forged-theme');
+            if (saved === 'dark') root.setAttribute('data-theme', 'dark');
+            toggle.addEventListener('click', () => {
+                const isDark = root.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    root.removeAttribute('data-theme');
+                    localStorage.setItem('forged-theme', 'light');
+                } else {
+                    root.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('forged-theme', 'dark');
+                }
+            });
+        })();
+
+        // Nav scroll effect
+        const nav = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 60);
+        });
+
+        // Catalog cards → click to try on
+        document.querySelectorAll('.wheel-card').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => {
+                const wheelIdx = parseInt(card.dataset.wheel);
+                if (!isNaN(wheelIdx)) {
+                    selectedWheel = wheelIdx;
+                    document.getElementById('showroom').scrollIntoView({ behavior: 'smooth' });
+                    // If no photo loaded yet, prompt upload
+                    if (canvasArea.style.display === 'none') {
+                        setTimeout(() => fileInput.click(), 600);
+                    } else {
+                        // Photo already loaded — add wheel overlay
+                        const rect = canvasArea.getBoundingClientRect();
+                        addWheelOverlayAt(wheelIdx, rect.width * 0.3, rect.height * 0.6);
+                    }
+                }
+            });
+        });
+
+        // Add auto-shine to each catalog card
+        document.querySelectorAll('.wheel-card-img').forEach(el => {
+            const shine = document.createElement('div');
+            shine.className = 'auto-shine';
+            el.appendChild(shine);
+        });
+
+        // Mouse parallax для hero wheel — 3D tilt следит за курсором
+        const wheelWrap = document.getElementById('wheelWrap');
+        if (wheelWrap) {
+            let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+            window.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 2;
+                const y = (e.clientY / window.innerHeight - 0.5) * 2;
+                targetX = y * 8;  // tilt up/down max 8deg
+                targetY = -x * 10; // tilt left/right max 10deg
+            });
+            function animateWheel() {
+                currentX += (targetX - currentX) * 0.05;
+                currentY += (targetY - currentY) * 0.05;
+                wheelWrap.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
+                requestAnimationFrame(animateWheel);
+            }
+            animateWheel();
+        }
+
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // === WHEEL DESIGNS (real PNG images) ===
+        const wheelDesigns = [
+            { name: 'HRE S101', img: '/wheels/w3.png', price: '3,200' },
+            { name: 'Vossen CV3', img: '/wheels/w8.png', price: '2,800' },
+            { name: 'ADV.1 Gold', img: '/wheels/w4.png', price: '3,600' },
+            { name: 'Classic Gold', img: '/wheels/w5.png', price: '3,400' },
+            { name: 'Silver Multi', img: '/wheels/w7.png', price: '2,400' },
+            { name: 'Chrome Deep', img: '/wheels/w6.png', price: '3,800' },
+            { name: 'Rotiform BLQ', img: '/wheels/w1.png', price: '2,600' },
+            { name: 'Work VS-XX', img: '/wheels/w2.png', price: '4,100' },
+            { name: 'BC Forged', img: '/wheels/w5.png', price: '2,900' },
+        ];
+
+        let selectedWheel = 0;
+        let wheelOverlayCount = 0;
+
+        const fileInput = document.getElementById('fileInput');
+        const carPhoto = document.getElementById('carPhoto');
+        const canvasArea = document.getElementById('canvasArea');
+        const fittingStand = document.getElementById('fittingStand');
+        const carSilhouette = document.getElementById('carSilhouette');
+        const showroomRoom = document.querySelector('.showroom-room');
+        const configActions = document.getElementById('configActions');
+        const showroomControls = document.getElementById('showroomControls');
+
+        // Build shelves on load
+        function buildShelves() {
+            const shelves = [
+                document.getElementById('shelfTop'),
+                document.getElementById('shelfMid'),
+                document.getElementById('shelfBottom')
+            ];
+            shelves.forEach(s => s.innerHTML = '');
+
+            wheelDesigns.forEach((w, i) => {
+                const item = document.createElement('div');
+                item.className = 'shelf-item';
+                item.dataset.wheel = i;
+                item.innerHTML = `<img src="${w.img}" alt="${w.name}"><span class="si-name">${w.name}</span><span class="si-price">€${w.price}</span>`;
+                initShelfDrag(item, i);
+                const shelfIndex = Math.floor(i / 3);
+                if (shelfIndex < shelves.length) shelves[shelfIndex].appendChild(item);
+            });
+
+            // Start in dormant state
+            showroomRoom.classList.add('showroom-dormant');
+        }
+        buildShelves();
+
+        // === SHELF DRAG ===
+        function initShelfDrag(item, wheelIndex) {
+            let ghost = null;
+            let dragging = false;
+            let startX, startY;
+
+            function startDrag(x, y) {
+                dragging = true;
+                selectedWheel = wheelIndex;
+                item.classList.add('picked');
+
+                ghost = document.createElement('div');
+                ghost.className = 'drag-ghost';
+                ghost.innerHTML = `<img src="${wheelDesigns[wheelIndex].img}" alt="">`;
+                document.body.appendChild(ghost);
+                moveGhost(x, y);
+            }
+
+            function moveGhost(x, y) {
+                if (!ghost) return;
+                ghost.style.left = (x - 50) + 'px';
+                ghost.style.top = (y - 50) + 'px';
+            }
+
+            function endDrag(x, y) {
+                if (!ghost) return;
+                const standRect = fittingStand.getBoundingClientRect();
+                const hit = x >= standRect.left && x <= standRect.right && y >= standRect.top && y <= standRect.bottom;
+
+                if (hit && canvasArea.style.display !== 'none') {
+                    // Drop on car
+                    const canvasRect = canvasArea.getBoundingClientRect();
+                    const relX = x - canvasRect.left;
+                    const relY = y - canvasRect.top;
+                    addWheelOverlayAt(wheelIndex, relX, relY);
+                    fittingStand.classList.remove('drop-active');
+                } else if (hit && canvasArea.style.display === 'none') {
+                    // No car photo yet — prompt upload
+                    fileInput.click();
+                }
+
+                ghost.remove();
+                ghost = null;
+                dragging = false;
+                item.classList.remove('picked');
+            }
+
+            // Mouse
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startX = e.clientX;
+                startY = e.clientY;
+
+                const onMove = (e) => {
+                    if (!dragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) {
+                        startDrag(e.clientX, e.clientY);
+                    }
+                    if (dragging) {
+                        moveGhost(e.clientX, e.clientY);
+                        // Check hover over fitting stand
+                        const r = fittingStand.getBoundingClientRect();
+                        fittingStand.classList.toggle('drop-active', e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom);
+                    }
+                };
+                const onUp = (e) => {
+                    if (dragging) {
+                        endDrag(e.clientX, e.clientY);
+                    } else {
+                        // Click — select wheel
+                        selectedWheel = wheelIndex;
+                    }
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            // Touch
+            let lastTouchX, lastTouchY;
+            item.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                startX = t.clientX;
+                startY = t.clientY;
+                lastTouchX = startX;
+                lastTouchY = startY;
+
+                const onMove = (e) => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    lastTouchX = t.clientX;
+                    lastTouchY = t.clientY;
+                    if (!dragging && (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8)) {
+                        startDrag(t.clientX, t.clientY);
+                    }
+                    if (dragging) moveGhost(t.clientX, t.clientY);
+                };
+                const onEnd = () => {
+                    if (dragging) endDrag(lastTouchX, lastTouchY);
+                    item.removeEventListener('touchmove', onMove);
+                    item.removeEventListener('touchend', onEnd);
+                };
+                item.addEventListener('touchmove', onMove, { passive: false });
+                item.addEventListener('touchend', onEnd);
+            }, { passive: true });
+        }
+
+        function addWheelOverlayAt(wheelIndex, x, y) {
+            wheelOverlayCount++;
+            const size = parseInt(document.getElementById('wheelSize').value);
+            const overlay = document.createElement('div');
+            overlay.className = 'wheel-overlay';
+            overlay.style.width = size + 'px';
+            overlay.style.height = size + 'px';
+            overlay.style.left = (x - size/2) + 'px';
+            overlay.style.top = (y - size/2) + 'px';
+            overlay.innerHTML = `<img class="wo-img" src="${wheelDesigns[wheelIndex].img}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;"><button class="remove-wheel" onclick="this.parentElement.remove()">×</button>`;
+            makeDraggable(overlay);
+            canvasArea.appendChild(overlay);
+        }
+
+        // === UPLOAD ===
+        const zone = document.getElementById('uploadZone');
+
+        zone.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadPhoto(file);
+        });
+
+        function loadPhoto(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                carPhoto.src = e.target.result;
+                carSilhouette.style.display = 'none';
+                canvasArea.style.display = 'flex';
+                configActions.style.display = 'flex';
+                showroomControls.style.display = 'flex';
+                showroomRoom.classList.remove('showroom-dormant');
+                showroomRoom.classList.add('showroom-active');
+                setTimeout(() => addWheelOverlay(), 300);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload() {
+            fileInput.value = '';
+            carSilhouette.style.display = '';
+            canvasArea.style.display = 'none';
+            configActions.style.display = 'none';
+            showroomControls.style.display = 'none';
+            showroomRoom.classList.add('showroom-dormant');
+            showroomRoom.classList.remove('showroom-active');
+            document.querySelectorAll('.wheel-overlay').forEach(el => el.remove());
+            wheelOverlayCount = 0;
+        }
+
+        // Drag-drop file onto fitting stand
+        fittingStand.addEventListener('dragover', (e) => { e.preventDefault(); fittingStand.classList.add('drop-active'); });
+        fittingStand.addEventListener('dragleave', () => { fittingStand.classList.remove('drop-active'); });
+        fittingStand.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fittingStand.classList.remove('drop-active');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) loadPhoto(file);
+        });
+
+        // === WHEEL OVERLAYS (draggable) ===
+        function addWheelOverlay() {
+            wheelOverlayCount++;
+            const overlay = document.createElement('div');
+            overlay.className = 'wheel-overlay';
+            const size = parseInt(document.getElementById('wheelSize').value);
+            overlay.style.width = size + 'px';
+            overlay.style.height = size + 'px';
+
+            // Position in center-bottom area of canvas
+            const rect = canvasArea.getBoundingClientRect();
+            overlay.style.left = (rect.width / 2 - size / 2 + (wheelOverlayCount % 2 === 0 ? 120 : -120)) + 'px';
+            overlay.style.top = (rect.height * 0.55) + 'px';
+
+            overlay.innerHTML = `
+                <img class="wo-img" src="${wheelDesigns[selectedWheel].img}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+                <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            makeDraggable(overlay);
+            canvasArea.appendChild(overlay);
+        }
+
+        function makeDraggable(el) {
+            let startX, startY, initialLeft, initialTop;
+
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('remove-wheel')) return;
+                e.preventDefault();
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+                el.style.zIndex = 10;
+
+                const onMove = (e) => {
+                    el.style.left = (initialLeft + e.clientX - startX) + 'px';
+                    el.style.top = (initialTop + e.clientY - startY) + 'px';
+                };
+
+                const onUp = () => {
+                    el.style.zIndex = '';
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            // Touch support
+            el.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('remove-wheel')) return;
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+
+                const onMove = (e) => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    el.style.left = (initialLeft + t.clientX - startX) + 'px';
+                    el.style.top = (initialTop + t.clientY - startY) + 'px';
+                };
+
+                const onEnd = () => {
+                    el.removeEventListener('touchmove', onMove);
+                    el.removeEventListener('touchend', onEnd);
+                };
+
+                el.addEventListener('touchmove', onMove, { passive: false });
+                el.addEventListener('touchend', onEnd);
+            }, { passive: true });
+        }
+
+        // Size slider
+        document.getElementById('wheelSize').addEventListener('input', (e) => {
+            const size = e.target.value + 'px';
+            document.querySelectorAll('.wheel-overlay').forEach(el => {
+                el.style.width = size;
+                el.style.height = size;
+            });
+        });
+
+        // === POPUP FUNCTIONS ===
+        function openOrderPopup() {
+            const w = wheelDesigns[selectedWheel];
+            document.getElementById('popupWheelImg').src = w.img;
+            document.getElementById('popupWheelName').textContent = w.name;
+            document.getElementById('popupPrice').textContent = 'от €' + w.price.replace(/\s/g, ',');
+            document.getElementById('orderPopup').classList.add('active');
+        }
+
+        function openSharePopup() {
+            document.getElementById('sharePopup').classList.add('active');
+        }
+
+        function closePopup(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Close popup on overlay click
+        document.querySelectorAll('.popup-overlay').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if (e.target === el) el.classList.remove('active');
+            });
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.popup-overlay.active').forEach(el => el.classList.remove('active'));
+            }
+        });
+
+        function copyShareLink() {
+            const input = document.getElementById('shareLink');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            const btn = input.nextElementSibling;
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 2000);
+        }
+
+        function shareWhatsApp() {
+            const w = wheelDesigns[selectedWheel];
+            const text = encodeURIComponent('Check out these ' + w.name + ' forged wheels on my car! ' + document.getElementById('shareLink').value);
+            window.open('https://wa.me/?text=' + text, '_blank');
+        }
+
+        function shareEmail() {
+            const w = wheelDesigns[selectedWheel];
+            const subject = encodeURIComponent('Check out my wheel setup - ' + w.name);
+            const body = encodeURIComponent('I just tried ' + w.name + ' forged wheels on my car using Forged visualizer!\n\n' + document.getElementById('shareLink').value);
+            window.open('mailto:?subject=' + subject + '&body=' + body);
+        }
+
+        function downloadSetup() {
+            alert('Download feature coming soon! For now, take a screenshot.');
+        }
+
+        // ═══════════════════════════════════════════
+        // DYNAMIC CATALOG (loads from catalog.json)
+        // ═══════════════════════════════════════════
+
+        let allWheels = [];
+        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+
+        async function loadCatalog() {
+            try {
+                // Try API first, fallback to static JSON
+                let wheels;
+                try {
+                    const resp = await fetch(API_BASE + '/api/wheels');
+                    const data = await resp.json();
+                    wheels = data.wheels;
+                } catch(e) {
+                    const resp = await fetch('/wheels/catalog.json');
+                    wheels = await resp.json();
+                }
+
+                allWheels = wheels;
+                renderCatalog(wheels);
+                updateShelf(wheels);
+            } catch(e) {
+                console.error('Failed to load catalog:', e);
+            }
+        }
+
+        function renderCatalog(wheels) {
+            const grid = document.getElementById('wheelGrid');
+            if (!grid) return;
+
+            grid.innerHTML = wheels.map((w, i) => `
+                <div class="wheel-card reveal ${i % 4 >= 1 ? 'reveal-delay-' + (i % 3) : ''}" data-wheel="${i}" data-category="${w.category}">
+                    <div class="wheel-card-img">
+                        <img src="/${w.image}" alt="${w.name}" loading="lazy">
+                    </div>
+                    <div class="wheel-card-info">
+                        <div class="wheel-card-name">${w.name}</div>
+                        <div class="wheel-card-spec">${w.category} · ${w.finish} · ${w.sizes.join('/', )}"</div>
+                        <div class="wheel-card-price">
+                            <div><span class="price">from €${(w.price_from * 4).toLocaleString()}</span> <span class="price-note">/ set of 4</span></div>
+                            <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Re-initialize scroll reveal for new elements
+            document.querySelectorAll('.wheel-card.reveal').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function updateShelf(wheels) {
+            // Update showroom shelf with all wheels
+            const rows = [
+                document.getElementById('shelfTop'),
+                document.getElementById('shelfMid'),
+                document.getElementById('shelfBottom')
+            ];
+
+            const perRow = Math.ceil(wheels.length / 3);
+
+            rows.forEach((row, ri) => {
+                if (!row) return;
+                const start = ri * perRow;
+                const end = Math.min(start + perRow, wheels.length);
+                const slice = wheels.slice(start, end);
+
+                row.innerHTML = slice.map((w, i) => `
+                    <div class="shelf-item" draggable="true"
+                         data-wheel-id="${w.id}"
+                         data-name="${w.name}"
+                         data-price-from="${w.price_from}"
+                         data-img="/${w.image}">
+                        <img src="/${w.image}" alt="${w.name}">
+                        <div class="si-price-tag">
+                            <div class="si-name">${w.name}</div>
+                            <div class="si-price">€${w.price_from}</div>
+                        </div>
+                    </div>
+                `).join('');
+            });
+
+            // Re-bind drag events
+            initShelfDrag();
+        }
+
+        function initShelfDrag() {
+            document.querySelectorAll('.shelf-item').forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        id: this.dataset.wheelId,
+                        name: this.dataset.name,
+                        img: this.dataset.img,
+                        priceFrom: this.dataset.priceFrom
+                    }));
+                    this.classList.add('picked');
+                    // Create drag ghost
+                    const ghost = document.createElement('img');
+                    ghost.src = this.dataset.img;
+                    ghost.style.width = '80px';
+                    ghost.style.height = '80px';
+                    document.body.appendChild(ghost);
+                    e.dataTransfer.setDragImage(ghost, 40, 40);
+                    setTimeout(() => ghost.remove(), 0);
+                });
+                item.addEventListener('dragend', function() {
+                    this.classList.remove('picked');
+                });
+            });
+        }
+
+        // Catalog filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const filter = this.dataset.filter;
+                if (filter === 'all') {
+                    renderCatalog(allWheels);
+                } else {
+                    renderCatalog(allWheels.filter(w => w.category === filter));
+                }
+            });
+        });
+
+        // ═══════════════════════════════════════════
+        // AI WHEEL DETECTION
+        // ═══════════════════════════════════════════
+
+        async function detectWheelsAI(file) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const statusEl = document.createElement('div');
+                statusEl.className = 'ai-status';
+                statusEl.innerHTML = '🧠 AI detecting wheels...';
+                statusEl.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:12px 24px;border-radius:8px;font-weight:600;z-index:9999;font-family:var(--sans);';
+                document.body.appendChild(statusEl);
+
+                const resp = await fetch(API_BASE + '/api/tryon/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await resp.json();
+                statusEl.remove();
+
+                if (result.success && result.wheels_detected > 0) {
+                    // Show success notification
+                    const notif = document.createElement('div');
+                    notif.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:12px 24px;border-radius:8px;font-weight:600;z-index:9999;font-family:var(--sans);';
+                    notif.innerHTML = `✅ ${result.wheels_detected} wheel(s) detected (${result.method})`;
+                    document.body.appendChild(notif);
+                    setTimeout(() => notif.remove(), 3000);
+
+                    return result.wheels;
+                }
+
+                return null;
+            } catch(e) {
+                console.error('AI detection failed:', e);
+                return null;
+            }
+        }
+
+        // Hook into existing upload flow — add AI detection
+        const origFileInputChange = document.getElementById('fileInput');
+        if (origFileInputChange) {
+            origFileInputChange.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Trigger AI detection in background
+                detectWheelsAI(file).then(wheels => {
+                    if (wheels) {
+                        console.log('AI Detected wheels:', wheels);
+                        // Store for later use
+                        window._detectedWheels = wheels;
+                    }
+                });
+            }, { capture: true });
+        }
+
+        // Load catalog on page load
+        loadCatalog();
+    </script>
+
+</body>
+</html>

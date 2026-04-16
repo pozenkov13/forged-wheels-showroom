@@ -1,0 +1,11 @@
+.env
+.DS_Store
+node_modules/
+*.log
+uploads/
+__pycache__/
+*.pyc
+generated/tests/
+generated/catalog/*_raw*
+versions/
+backups/
