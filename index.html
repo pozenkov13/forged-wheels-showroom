@@ -2236,15 +2236,15 @@
 
         // === WHEEL DESIGNS (real PNG images) ===
         const wheelDesigns = [
-            { name: 'HRE S101', img: '/wheels/w3.png', price: '3,200' },
-            { name: 'Vossen CV3', img: '/wheels/w8.png', price: '2,800' },
-            { name: 'ADV.1 Gold', img: '/wheels/w4.png', price: '3,600' },
-            { name: 'Classic Gold', img: '/wheels/w5.png', price: '3,400' },
-            { name: 'Silver Multi', img: '/wheels/w7.png', price: '2,400' },
-            { name: 'Chrome Deep', img: '/wheels/w6.png', price: '3,800' },
-            { name: 'Rotiform BLQ', img: '/wheels/w1.png', price: '2,600' },
-            { name: 'Work VS-XX', img: '/wheels/w2.png', price: '4,100' },
-            { name: 'BC Forged', img: '/wheels/w5.png', price: '2,900' },
+            { name: 'HRE S101', img: 'wheels/w3.png', price: '3,200' },
+            { name: 'Vossen CV3', img: 'wheels/w8.png', price: '2,800' },
+            { name: 'ADV.1 Gold', img: 'wheels/w4.png', price: '3,600' },
+            { name: 'Classic Gold', img: 'wheels/w5.png', price: '3,400' },
+            { name: 'Silver Multi', img: 'wheels/w7.png', price: '2,400' },
+            { name: 'Chrome Deep', img: 'wheels/w6.png', price: '3,800' },
+            { name: 'Rotiform BLQ', img: 'wheels/w1.png', price: '2,600' },
+            { name: 'Work VS-XX', img: 'wheels/w2.png', price: '4,100' },
+            { name: 'BC Forged', img: 'wheels/w5.png', price: '2,900' },
         ];
 
         let selectedWheel = 0;
@@ -2612,7 +2612,7 @@
                     const data = await resp.json();
                     wheels = data.wheels;
                 } catch(e) {
-                    const resp = await fetch('/wheels/catalog.json');
+                    const resp = await fetch('wheels/catalog.json');
                     wheels = await resp.json();
                 }
 
@@ -2631,7 +2631,7 @@
             grid.innerHTML = wheels.map((w, i) => `
                 <div class="wheel-card reveal ${i % 4 >= 1 ? 'reveal-delay-' + (i % 3) : ''}" data-wheel="${i}" data-category="${w.category}">
                     <div class="wheel-card-img">
-                        <img src="/${w.image}" alt="${w.name}" loading="lazy">
+                        <img src="${w.image}" alt="${w.name}" loading="lazy">
                     </div>
                     <div class="wheel-card-info">
                         <div class="wheel-card-name">${w.name}</div>
@@ -2671,8 +2671,8 @@
                          data-wheel-id="${w.id}"
                          data-name="${w.name}"
                          data-price-from="${w.price_from}"
-                         data-img="/${w.image}">
-                        <img src="/${w.image}" alt="${w.name}">
+                         data-img="${w.image}">
+                        <img src="${w.image}" alt="${w.name}">
                         <div class="si-price-tag">
                             <div class="si-name">${w.name}</div>
                             <div class="si-price">€${w.price_from}</div>
