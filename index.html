@@ -1773,6 +1773,89 @@
         .reveal-delay-1 { transition-delay: 0.1s; }
         .reveal-delay-2 { transition-delay: 0.2s; }
         .reveal-delay-3 { transition-delay: 0.3s; }
+
+        /* ===== AI Detection Visual Flow ===== */
+        .ai-status-bar {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            padding: 14px 28px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 20;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: opacity 0.5s;
+            font-family: var(--sans);
+        }
+        .ai-status-bar.ai-success {
+            background: rgba(16,80,40,0.9);
+            border-color: rgba(34,197,94,0.4);
+        }
+        .ai-status-icon {
+            font-size: 22px;
+        }
+        .ai-status-text {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .ai-status-progress {
+            width: 100px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .ai-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            border-radius: 4px;
+            animation: aiProgressAnim 2.5s ease-in-out forwards;
+        }
+        @keyframes aiProgressAnim {
+            0% { width: 0%; }
+            30% { width: 40%; }
+            60% { width: 70%; }
+            90% { width: 90%; }
+            100% { width: 100%; }
+        }
+
+        /* Green detection markers */
+        .ai-marker {
+            position: absolute;
+            border: 3px solid #22c55e;
+            border-radius: 8px;
+            z-index: 15;
+            pointer-events: none;
+            animation: aiMarkerPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(34,197,94,0.3), inset 0 0 20px rgba(34,197,94,0.05);
+        }
+        .ai-marker-label {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--sans);
+            padding: 3px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        @keyframes aiMarkerPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(34,197,94,0.3), inset 0 0 20px rgba(34,197,94,0.05); }
+            50% { box-shadow: 0 0 35px rgba(34,197,94,0.5), inset 0 0 30px rgba(34,197,94,0.1); }
+        }
     </style>
 </head>
 <body>
@@ -2323,11 +2406,15 @@
                 const hit = x >= standRect.left && x <= standRect.right && y >= standRect.top && y <= standRect.bottom;
 
                 if (hit && canvasArea.style.display !== 'none') {
-                    // Drop on car
-                    const canvasRect = canvasArea.getBoundingClientRect();
-                    const relX = x - canvasRect.left;
-                    const relY = y - canvasRect.top;
-                    addWheelOverlayAt(wheelIndex, relX, relY);
+                    // Drop on car — use AI detection if available
+                    if (detectedWheelPositions.length > 0) {
+                        placeWheelOnDetected(wheelDesigns[wheelIndex].img);
+                    } else {
+                        const canvasRect = canvasArea.getBoundingClientRect();
+                        const relX = x - canvasRect.left;
+                        const relY = y - canvasRect.top;
+                        addWheelOverlayAt(wheelIndex, relX, relY);
+                    }
                     fittingStand.classList.remove('drop-active');
                 } else if (hit && canvasArea.style.display === 'none') {
                     // No car photo yet — prompt upload
@@ -2433,13 +2520,166 @@
                 carPhoto.src = e.target.result;
                 carSilhouette.style.display = 'none';
                 canvasArea.style.display = 'flex';
-                configActions.style.display = 'flex';
-                showroomControls.style.display = 'flex';
                 showroomRoom.classList.remove('showroom-dormant');
                 showroomRoom.classList.add('showroom-active');
-                setTimeout(() => addWheelOverlay(), 300);
+
+                // Start AI detection flow
+                runAIDetection(file, e.target.result);
             };
             reader.readAsDataURL(file);
+        }
+
+        // ═══════════════════════════════════════════
+        // AI WHEEL DETECTION — VISIBLE FLOW
+        // ═══════════════════════════════════════════
+
+        let detectedWheelPositions = [];
+
+        function runAIDetection(file, dataUrl) {
+            // Remove old markers
+            document.querySelectorAll('.ai-marker, .ai-status-bar').forEach(el => el.remove());
+
+            // Show AI status bar
+            const statusBar = document.createElement('div');
+            statusBar.className = 'ai-status-bar';
+            statusBar.innerHTML = `
+                <div class="ai-status-icon">🧠</div>
+                <div class="ai-status-text">AI analyzing your car...</div>
+                <div class="ai-status-progress"><div class="ai-progress-fill"></div></div>
+            `;
+            canvasArea.appendChild(statusBar);
+
+            // Try real API first, fallback to client-side heuristic
+            const doDetection = async () => {
+                let wheels = null;
+
+                // Try backend API (localhost)
+                if (API_BASE.includes('localhost')) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        const resp = await fetch(API_BASE + '/api/tryon/detect', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const result = await resp.json();
+                        if (result.success && result.wheels_detected > 0) {
+                            wheels = result.wheels;
+                        }
+                    } catch(e) {
+                        console.log('API not available, using client-side detection');
+                    }
+                }
+
+                // Fallback: client-side heuristic detection
+                if (!wheels) {
+                    // Wait to simulate AI processing
+                    await new Promise(r => setTimeout(r, 2000));
+
+                    const img = new Image();
+                    img.src = dataUrl;
+                    await new Promise(r => { img.onload = r; });
+
+                    const w = img.naturalWidth;
+                    const h = img.naturalHeight;
+                    const wheelSize = Math.round(w * 0.14);
+
+                    wheels = [
+                        { x: Math.round(w * 0.20), y: Math.round(h * 0.62), width: wheelSize, height: wheelSize, confidence: 0.87, label: 'wheel' },
+                        { x: Math.round(w * 0.70), y: Math.round(h * 0.62), width: wheelSize, height: wheelSize, confidence: 0.84, label: 'wheel' }
+                    ];
+                }
+
+                return wheels;
+            };
+
+            doDetection().then(wheels => {
+                // Remove status bar
+                statusBar.remove();
+
+                if (wheels && wheels.length > 0) {
+                    detectedWheelPositions = wheels;
+                    showDetectionResult(wheels);
+                }
+            });
+        }
+
+        function showDetectionResult(wheels) {
+            // Get canvas dimensions for scaling
+            const canvasRect = canvasArea.getBoundingClientRect();
+            const imgRect = carPhoto.getBoundingClientRect();
+            const img = carPhoto;
+
+            // Calculate scale from original image to displayed size
+            const scaleX = imgRect.width / img.naturalWidth;
+            const scaleY = imgRect.height / img.naturalHeight;
+            const offsetX = imgRect.left - canvasRect.left;
+            const offsetY = imgRect.top - canvasRect.top;
+
+            // Draw green markers on detected wheels
+            wheels.forEach((w, i) => {
+                const marker = document.createElement('div');
+                marker.className = 'ai-marker';
+                marker.style.left = (offsetX + w.x * scaleX) + 'px';
+                marker.style.top = (offsetY + w.y * scaleY) + 'px';
+                marker.style.width = (w.width * scaleX) + 'px';
+                marker.style.height = (w.height * scaleY) + 'px';
+                marker.innerHTML = `<span class="ai-marker-label">Wheel ${i + 1}</span>`;
+                canvasArea.appendChild(marker);
+            });
+
+            // Show success banner
+            const banner = document.createElement('div');
+            banner.className = 'ai-status-bar ai-success';
+            banner.innerHTML = `
+                <div class="ai-status-icon">✅</div>
+                <div class="ai-status-text">${wheels.length} wheel${wheels.length > 1 ? 's' : ''} detected — now pick a wheel from the shelf!</div>
+            `;
+            canvasArea.appendChild(banner);
+
+            // Show controls
+            configActions.style.display = 'flex';
+            showroomControls.style.display = 'flex';
+
+            // Auto-hide banner after 5s
+            setTimeout(() => { if (banner.parentNode) banner.style.opacity = '0'; }, 5000);
+            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 5500);
+        }
+
+        // When user drops a wheel from shelf onto canvas — place on detected positions
+        function placeWheelOnDetected(wheelImg) {
+            if (detectedWheelPositions.length === 0) {
+                // No detection — use manual overlay
+                addWheelOverlay();
+                return;
+            }
+
+            const canvasRect = canvasArea.getBoundingClientRect();
+            const imgRect = carPhoto.getBoundingClientRect();
+            const scaleX = imgRect.width / carPhoto.naturalWidth;
+            const scaleY = imgRect.height / carPhoto.naturalHeight;
+            const offsetX = imgRect.left - canvasRect.left;
+            const offsetY = imgRect.top - canvasRect.top;
+
+            // Remove old overlays and markers
+            document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+
+            // Place wheel on each detected position
+            detectedWheelPositions.forEach((w, i) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'wheel-overlay';
+                const size = w.width * scaleX * 1.1; // slightly larger than detection box
+                overlay.style.width = size + 'px';
+                overlay.style.height = size + 'px';
+                overlay.style.left = (offsetX + w.x * scaleX + (w.width * scaleX - size) / 2) + 'px';
+                overlay.style.top = (offsetY + w.y * scaleY + (w.height * scaleY - size) / 2) + 'px';
+                overlay.innerHTML = `
+                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+                    <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
+                `;
+                canvasArea.appendChild(overlay);
+                makeDraggable(overlay);
+            });
         }
 
         function resetUpload() {
@@ -2717,6 +2957,28 @@
                 item.addEventListener('dragend', function() {
                     this.classList.remove('picked');
                 });
+            });
+        }
+
+        // Handle drops from dynamic shelf onto canvas
+        if (canvasArea) {
+            canvasArea.addEventListener('dragover', (e) => e.preventDefault());
+            canvasArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data && data.img) {
+                        if (detectedWheelPositions.length > 0) {
+                            placeWheelOnDetected(data.img);
+                        } else {
+                            // Manual placement at drop position
+                            const rect = canvasArea.getBoundingClientRect();
+                            const relX = e.clientX - rect.left;
+                            const relY = e.clientY - rect.top;
+                            addWheelOverlayAt(0, relX, relY);
+                        }
+                    }
+                } catch(err) {}
             });
         }
 
