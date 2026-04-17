@@ -2646,14 +2646,14 @@
 
             doDetection().then(wheels => {
                 // Remove ALL status bars (including stuck ones)
-                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
 
                 if (wheels && wheels.length > 0) {
                     detectedWheelPositions = wheels;
                     showDetectionResult(wheels);
                 }
             }).catch(() => {
-                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
             });
         }
 
@@ -2718,15 +2718,31 @@
             if (!lastUploadedPhoto || !wheelId || detectedWheelPositions.length === 0) return;
 
             // Show "AI rendering..." status
-            document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+            document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
             const statusBar = document.createElement('div');
             statusBar.className = 'ai-status-bar';
             statusBar.innerHTML = `
                 <div class="ai-status-icon">✨</div>
-                <div class="ai-status-text">AI rendering your exact wheel design... (60-120s)</div>
-                <div class="ai-status-progress"><div class="ai-progress-fill" style="animation-duration:60s;"></div></div>
+                <div class="ai-status-text" id="aiStatusText">AI analyzing your photo...</div>
+                <div class="ai-status-progress"><div class="ai-progress-fill" style="animation-duration:30s;"></div></div>
             `;
             canvasArea.appendChild(statusBar);
+
+            // Cycling status messages so user sees progress
+            const phases = [
+                { t: 2000,  msg: '🔍 Detecting wheel positions...' },
+                { t: 6000,  msg: '🎨 Matching wheel design to your car...' },
+                { t: 12000, msg: '⚙️ Rendering spokes and finish...' },
+                { t: 18000, msg: '✨ Final touches on lighting and shadows...' },
+                { t: 25000, msg: '⏳ Almost ready...' },
+            ];
+            const phaseTimers = phases.map(p => setTimeout(() => {
+                const el = document.getElementById('aiStatusText');
+                if (el) el.textContent = p.msg;
+            }, p.t));
+            // Store timers so we can clear them when done
+            statusBar.dataset.timers = JSON.stringify([]);
+            statusBar._phaseTimers = phaseTimers;
 
             // Use unified API_BASE (handles localhost, github.io, vercel.app)
             const inpaintUrl = API_BASE + '/api/inpaint';
@@ -2743,7 +2759,7 @@
                 });
 
                 const result = await resp.json();
-                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
 
                 if (result.success && result.result_url) {
                     // Replace car photo with AI-generated result
@@ -2772,7 +2788,7 @@
                     setTimeout(() => banner.remove(), 4000);
                 }
             } catch (err) {
-                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
                 console.error('Inpaint error:', err);
             }
         }

@@ -166,18 +166,21 @@ def detect_wheels_florence(image_url):
     return []
 
 
-def run_flux2_edit(car_url, wheel_url, prompt):
-    """Submit FLUX.2 edit with car photo + wheel reference and poll for result."""
+def run_seedream_edit(car_url, wheel_url, prompt):
+    """Submit Seedream v4 edit with car + wheel reference (most accurate wheel transfer).
+
+    Why Seedream: tested against FLUX.2, Nano Banana Pro — Seedream gives the most
+    accurate copy of reference wheel design (spokes, color, finish) at $0.04/image, 5-10s.
+    """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/flux-2/edit",
+        "https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit",
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
-            "num_inference_steps": 28,
-            "guidance_scale": 3.5,
+            "num_images": 1,
         },
         headers=headers,
         timeout=30
@@ -190,8 +193,8 @@ def run_flux2_edit(car_url, wheel_url, prompt):
     if not response_url:
         return None, "No response_url"
 
-    # Poll (max 3 min — FLUX.2 is slower)
-    for _ in range(90):
+    # Poll (max 60s — Seedream is fast)
+    for _ in range(30):
         time.sleep(2)
         poll_resp = requests.get(response_url, headers=headers, timeout=30)
         if poll_resp.status_code != 200:
@@ -258,8 +261,8 @@ class handler(BaseHTTPRequestHandler):
             # Step 3: Build prompt referencing both images
             prompt = build_wheel_prompt(wheel)
 
-            # Step 4: Run FLUX.2 edit with car + wheel reference
-            result_url, error = run_flux2_edit(car_url, wheel_url, prompt)
+            # Step 4: Run Seedream v4 edit with car + wheel reference
+            result_url, error = run_seedream_edit(car_url, wheel_url, prompt)
 
             if error:
                 return self._error(500, error)
@@ -268,7 +271,7 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "result_url": result_url,
                 "wheel_applied": wheel["name"],
-                "model": "flux-2/edit",
+                "model": "seedream/v4/edit",
                 "reference_urls": {"car": car_url, "wheel": wheel_url},
                 "prompt": prompt
             })
