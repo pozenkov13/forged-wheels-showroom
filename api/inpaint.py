@@ -46,9 +46,9 @@ def build_wheel_prompt(wheel):
     desc = category_desc.get(category, "forged design")
 
     return (
-        f"Replace the car wheels in the first image with the exact wheel shown in the second image. "
-        f"Copy the wheel from image 2 precisely — same spokes, same colors, same finish. "
-        f"Keep everything else from image 1 identical."
+        "Take the car from image 1. Change both of its wheels to look exactly "
+        "like the wheel rim shown in image 2. The car, body color, background, "
+        "and lighting must stay identical. Only the wheels change."
     )
 
 
