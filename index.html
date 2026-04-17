@@ -3199,23 +3199,7 @@
             }
         }
 
-        // Hook into existing upload flow — add AI detection
-        const origFileInputChange = document.getElementById('fileInput');
-        if (origFileInputChange) {
-            origFileInputChange.addEventListener('change', async function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                // Trigger AI detection in background
-                detectWheelsAI(file).then(wheels => {
-                    if (wheels) {
-                        console.log('AI Detected wheels:', wheels);
-                        // Store for later use
-                        window._detectedWheels = wheels;
-                    }
-                });
-            }, { capture: true });
-        }
+        // NOTE: legacy detectWheelsAI() removed — detection now runs inside loadPhoto → runAIDetection()
 
         // Load catalog on page load
         loadCatalog();
