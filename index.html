@@ -2728,10 +2728,8 @@
             `;
             canvasArea.appendChild(statusBar);
 
-            // Determine API endpoint
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiBase = isLocal ? 'http://localhost:8000' : '';
-            const inpaintUrl = apiBase + '/api/inpaint';
+            // Use unified API_BASE (handles localhost, github.io, vercel.app)
+            const inpaintUrl = API_BASE + '/api/inpaint';
 
             try {
                 const resp = await fetch(inpaintUrl, {
@@ -3010,7 +3008,12 @@
         // ═══════════════════════════════════════════
 
         let allWheels = [];
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+        const API_BASE = (() => {
+            const host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:8000';
+            if (host.includes('github.io')) return 'https://forged-wheels-showroom.vercel.app';
+            return ''; // On Vercel — use relative paths
+        })();
 
         async function loadCatalog() {
             try {
