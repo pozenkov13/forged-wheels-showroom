@@ -2723,26 +2723,21 @@
             statusBar.className = 'ai-status-bar';
             statusBar.innerHTML = `
                 <div class="ai-status-icon">✨</div>
-                <div class="ai-status-text" id="aiStatusText">AI analyzing your photo...</div>
+                <div class="ai-status-text" id="aiStatusText">AI rendering your wheels... <span id="aiTimer">0s</span></div>
                 <div class="ai-status-progress"><div class="ai-progress-fill" style="animation-duration:30s;"></div></div>
             `;
             canvasArea.appendChild(statusBar);
 
-            // Cycling status messages so user sees progress
-            const phases = [
-                { t: 2000,  msg: '🔍 Detecting wheel positions...' },
-                { t: 6000,  msg: '🎨 Matching wheel design to your car...' },
-                { t: 12000, msg: '⚙️ Rendering spokes and finish...' },
-                { t: 18000, msg: '✨ Final touches on lighting and shadows...' },
-                { t: 25000, msg: '⏳ Almost ready...' },
-            ];
-            const phaseTimers = phases.map(p => setTimeout(() => {
-                const el = document.getElementById('aiStatusText');
-                if (el) el.textContent = p.msg;
-            }, p.t));
-            // Store timers so we can clear them when done
-            statusBar.dataset.timers = JSON.stringify([]);
-            statusBar._phaseTimers = phaseTimers;
+            // Live counter so user sees something is happening
+            const startT = Date.now();
+            const timerInterval = setInterval(() => {
+                const el = document.getElementById('aiTimer');
+                if (el) el.textContent = Math.round((Date.now() - startT) / 1000) + 's';
+            }, 500);
+            statusBar._phaseTimers = [timerInterval];
+            // Override clearTimeout to also clear interval
+            const origClear = statusBar._phaseTimers;
+            statusBar._clearFns = () => { clearInterval(timerInterval); };
 
             // Use unified API_BASE (handles localhost, github.io, vercel.app)
             const inpaintUrl = API_BASE + '/api/inpaint';
