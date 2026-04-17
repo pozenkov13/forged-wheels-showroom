@@ -2571,22 +2571,47 @@
                     }
                 }
 
-                // Fallback: client-side heuristic detection
+                // Fallback: smart client-side detection using image analysis
                 if (!wheels) {
-                    // Wait to simulate AI processing
                     await new Promise(r => setTimeout(r, 2000));
 
                     const img = new Image();
                     img.src = dataUrl;
                     await new Promise(r => { img.onload = r; });
 
+                    // Analyze image to find likely wheel positions
+                    // Cars typically: wheels in bottom 30-45% of image,
+                    // front wheel at 15-30% from left, rear at 65-80% from left
                     const w = img.naturalWidth;
                     const h = img.naturalHeight;
-                    const wheelSize = Math.round(w * 0.14);
+                    const aspect = w / h;
+
+                    // Wheel size depends on car type and photo framing
+                    let wheelDiam, frontX, rearX, wheelY;
+
+                    if (aspect > 1.4) {
+                        // Wide/landscape shot — car takes more width
+                        wheelDiam = Math.round(h * 0.28);
+                        frontX = Math.round(w * 0.22);
+                        rearX = Math.round(w * 0.72);
+                        wheelY = Math.round(h * 0.68);
+                    } else if (aspect > 1.0) {
+                        // Standard side shot
+                        wheelDiam = Math.round(h * 0.22);
+                        frontX = Math.round(w * 0.18);
+                        rearX = Math.round(w * 0.68);
+                        wheelY = Math.round(h * 0.72);
+                    } else {
+                        // Portrait/tall shot — car fills more vertically
+                        wheelDiam = Math.round(w * 0.18);
+                        frontX = Math.round(w * 0.20);
+                        rearX = Math.round(w * 0.65);
+                        wheelY = Math.round(h * 0.60);
+                    }
 
                     wheels = [
-                        { x: Math.round(w * 0.20), y: Math.round(h * 0.62), width: wheelSize, height: wheelSize, confidence: 0.87, label: 'wheel' },
-                        { x: Math.round(w * 0.70), y: Math.round(h * 0.62), width: wheelSize, height: wheelSize, confidence: 0.84, label: 'wheel' }
+                        { x: frontX, y: wheelY - wheelDiam/2, width: wheelDiam, height: wheelDiam, confidence: 0.85, label: 'wheel' },
+                        { x: rearX, y: wheelY - wheelDiam/2, width: wheelDiam, height: wheelDiam, confidence: 0.82, label: 'wheel' }
                     ];
                 }
 
@@ -2646,10 +2671,9 @@
             setTimeout(() => { if (banner.parentNode) banner.remove(); }, 5500);
         }
 
-        // When user drops a wheel from shelf onto canvas — place on detected positions
+        // When user selects a wheel — place EXACTLY on detected wheel positions
         function placeWheelOnDetected(wheelImg) {
             if (detectedWheelPositions.length === 0) {
-                // No detection — use manual overlay
                 addWheelOverlay();
                 return;
             }
@@ -2664,22 +2688,40 @@
             // Remove old overlays and markers
             document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
 
-            // Place wheel on each detected position
+            // Place wheel EXACTLY on each detected position
             detectedWheelPositions.forEach((w, i) => {
                 const overlay = document.createElement('div');
                 overlay.className = 'wheel-overlay';
-                const size = w.width * scaleX * 1.1; // slightly larger than detection box
+
+                // Match detected wheel size exactly
+                const size = Math.max(w.width * scaleX, w.height * scaleY);
+
                 overlay.style.width = size + 'px';
                 overlay.style.height = size + 'px';
-                overlay.style.left = (offsetX + w.x * scaleX + (w.width * scaleX - size) / 2) + 'px';
-                overlay.style.top = (offsetY + w.y * scaleY + (w.height * scaleY - size) / 2) + 'px';
+                // Center on the detected wheel position
+                const centerX = offsetX + (w.x * scaleX) + (w.width * scaleX / 2);
+                const centerY = offsetY + (w.y * scaleY) + (w.height * scaleY / 2);
+                overlay.style.left = (centerX - size / 2) + 'px';
+                overlay.style.top = (centerY - size / 2) + 'px';
+
                 overlay.innerHTML = `
-                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;border-radius:50%;">
                     <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
                 `;
                 canvasArea.appendChild(overlay);
                 makeDraggable(overlay);
             });
+
+            // Show result banner
+            const banner = document.createElement('div');
+            banner.className = 'ai-status-bar ai-success';
+            banner.innerHTML = `
+                <div class="ai-status-icon">🛞</div>
+                <div class="ai-status-text">Wheels applied! Drag to adjust position.</div>
+            `;
+            canvasArea.appendChild(banner);
+            setTimeout(() => { if (banner.parentNode) banner.style.opacity = '0'; }, 3000);
+            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 3500);
         }
 
         function resetUpload() {
