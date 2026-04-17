@@ -16,10 +16,14 @@ class handler(BaseHTTPRequestHandler):
         path = self.path
 
         if path == "/api/health":
+            fal_key = os.environ.get("FAL_KEY", "")
             self._json_response({
                 "status": "ok",
                 "version": "0.1.0",
-                "ai_enabled": bool(os.environ.get("FAL_KEY")),
+                "ai_enabled": bool(fal_key),
+                "fal_key_length": len(fal_key),
+                "fal_key_has_colon": ":" in fal_key,
+                "fal_key_preview": fal_key[:8] + "..." + fal_key[-4:] if len(fal_key) > 12 else "",
                 "catalog_size": self._get_catalog_size(),
                 "platform": "vercel"
             })
