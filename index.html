@@ -2432,7 +2432,9 @@
                 if (hit && canvasArea.style.display !== 'none') {
                     // Drop on car — use AI detection if available
                     if (detectedWheelPositions.length > 0) {
-                        placeWheelOnDetected(wheelDesigns[wheelIndex].img);
+                        const imgPath = wheelDesigns[wheelIndex].img;
+                        const wid = imgPath.match(/w(\d+)\.png/) ? imgPath.match(/(w\d+)\.png/)[1] : null;
+                        placeWheelOnDetected(imgPath, wid);
                     } else {
                         const canvasRect = canvasArea.getBoundingClientRect();
                         const relX = x - canvasRect.left;
@@ -2643,13 +2645,15 @@
             };
 
             doDetection().then(wheels => {
-                // Remove status bar
-                statusBar.remove();
+                // Remove ALL status bars (including stuck ones)
+                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
 
                 if (wheels && wheels.length > 0) {
                     detectedWheelPositions = wheels;
                     showDetectionResult(wheels);
                 }
+            }).catch(() => {
+                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
             });
         }
 
@@ -2695,12 +2699,94 @@
             setTimeout(() => { if (banner.parentNode) banner.remove(); }, 5500);
         }
 
-        // When user selects a wheel — place EXACTLY on detected wheel positions
-        function placeWheelOnDetected(wheelImg) {
+        // Store last uploaded photo for AI inpainting
+        let lastUploadedPhoto = null;
+        let currentWheelId = null;
+
+        // Hook into runAIDetection to store photo
+        const _origRunDetection = runAIDetection;
+        runAIDetection = function(file, dataUrl) {
+            lastUploadedPhoto = dataUrl;
+            return _origRunDetection(file, dataUrl);
+        };
+
+        // ═══════════════════════════════════════════
+        // AI INPAINTING — REAL wheel replacement via fal.ai
+        // ═══════════════════════════════════════════
+
+        async function runAIInpainting(wheelId) {
+            if (!lastUploadedPhoto || !wheelId || detectedWheelPositions.length === 0) return;
+
+            // Show "AI rendering..." status
+            document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+            const statusBar = document.createElement('div');
+            statusBar.className = 'ai-status-bar';
+            statusBar.innerHTML = `
+                <div class="ai-status-icon">✨</div>
+                <div class="ai-status-text">AI rendering your wheels... (30-60s)</div>
+                <div class="ai-status-progress"><div class="ai-progress-fill" style="animation-duration:60s;"></div></div>
+            `;
+            canvasArea.appendChild(statusBar);
+
+            // Determine API endpoint
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiBase = isLocal ? 'http://localhost:8000' : '';
+            const inpaintUrl = apiBase + '/api/inpaint';
+
+            try {
+                const resp = await fetch(inpaintUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: lastUploadedPhoto,
+                        wheels: detectedWheelPositions,
+                        wheel_id: wheelId
+                    })
+                });
+
+                const result = await resp.json();
+                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+
+                if (result.success && result.result_url) {
+                    // Replace car photo with AI-generated result
+                    carPhoto.src = result.result_url;
+                    // Remove all overlays (AI already rendered wheels into the image)
+                    document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+
+                    const banner = document.createElement('div');
+                    banner.className = 'ai-status-bar ai-success';
+                    banner.innerHTML = `
+                        <div class="ai-status-icon">🎉</div>
+                        <div class="ai-status-text">AI rendered ${result.wheel_applied} on your car!</div>
+                    `;
+                    canvasArea.appendChild(banner);
+                    setTimeout(() => banner.remove(), 4000);
+                } else {
+                    // Fallback: show error, keep overlay
+                    const banner = document.createElement('div');
+                    banner.className = 'ai-status-bar';
+                    banner.style.background = 'rgba(180,40,40,0.9)';
+                    banner.innerHTML = `
+                        <div class="ai-status-icon">⚠️</div>
+                        <div class="ai-status-text">AI rendering unavailable. Showing preview overlay.</div>
+                    `;
+                    canvasArea.appendChild(banner);
+                    setTimeout(() => banner.remove(), 4000);
+                }
+            } catch (err) {
+                document.querySelectorAll('.ai-status-bar').forEach(el => el.remove());
+                console.error('Inpaint error:', err);
+            }
+        }
+
+        // When user selects a wheel — place overlay + trigger AI inpainting
+        function placeWheelOnDetected(wheelImg, wheelId) {
             if (detectedWheelPositions.length === 0) {
                 addWheelOverlay();
                 return;
             }
+
+            currentWheelId = wheelId;
 
             const canvasRect = canvasArea.getBoundingClientRect();
             const imgRect = carPhoto.getBoundingClientRect();
@@ -2739,16 +2825,20 @@
                 makeDraggable(overlay);
             });
 
-            // Show result banner
+            // Show preview banner briefly
             const banner = document.createElement('div');
             banner.className = 'ai-status-bar ai-success';
             banner.innerHTML = `
                 <div class="ai-status-icon">🛞</div>
-                <div class="ai-status-text">Wheels applied! Drag to adjust position.</div>
+                <div class="ai-status-text">Preview applied! Starting AI render...</div>
             `;
             canvasArea.appendChild(banner);
-            setTimeout(() => { if (banner.parentNode) banner.style.opacity = '0'; }, 3000);
-            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 3500);
+            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 2000);
+
+            // Trigger real AI inpainting for photorealistic result
+            if (wheelId) {
+                setTimeout(() => runAIInpainting(wheelId), 2200);
+            }
         }
 
         function resetUpload() {
@@ -3038,7 +3128,7 @@
                     const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                     if (data && data.img) {
                         if (detectedWheelPositions.length > 0) {
-                            placeWheelOnDetected(data.img);
+                            placeWheelOnDetected(data.img, data.id);
                         } else {
                             // Manual placement at drop position
                             const rect = canvasArea.getBoundingClientRect();

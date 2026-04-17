@@ -1,8 +1,18 @@
 {
   "buildCommand": "",
   "outputDirectory": ".",
+  "functions": {
+    "api/inpaint.py": {
+      "maxDuration": 120,
+      "memory": 1024
+    },
+    "api/index.py": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" }
+    { "source": "/api/inpaint", "destination": "/api/inpaint" },
+    { "source": "/api/(.*)", "destination": "/api/index" }
   ],
   "headers": [
     {
