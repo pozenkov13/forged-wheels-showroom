@@ -100,6 +100,56 @@ def upload_to_fal(image_bytes, filename, content_type="image/png"):
     return f"data:{content_type};base64,{b64}"
 
 
+def detect_wheels_florence(image_url):
+    """Run Florence-2 object detection to find wheel positions."""
+    fal_key = get_fal_key()
+    headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
+
+    submit_resp = requests.post(
+        "https://queue.fal.run/fal-ai/florence-2-large/object-detection",
+        json={"image_url": image_url, "task": "object_detection"},
+        headers=headers,
+        timeout=30
+    )
+
+    if submit_resp.status_code != 200:
+        return []
+
+    response_url = submit_resp.json().get("response_url")
+    if not response_url:
+        return []
+
+    for _ in range(25):
+        time.sleep(2)
+        poll_resp = requests.get(response_url, headers=headers, timeout=30)
+        if poll_resp.status_code != 200:
+            continue
+
+        result = poll_resp.json()
+        if result.get("status") in ("IN_QUEUE", "IN_PROGRESS"):
+            continue
+
+        if "results" in result and "bboxes" in result["results"]:
+            bboxes = result["results"]["bboxes"]
+            out_w = result.get("image", {}).get("width", 1)
+            out_h = result.get("image", {}).get("height", 1)
+
+            wheels = []
+            for bbox in bboxes:
+                if bbox.get("label", "").lower() == "wheel":
+                    wheels.append({
+                        "x": bbox["x"],
+                        "y": bbox["y"],
+                        "width": bbox["w"],
+                        "height": bbox["h"],
+                        "_source_w": out_w,
+                        "_source_h": out_h
+                    })
+            return wheels
+
+    return []
+
+
 def run_flux_fill(image_url, mask_url, prompt):
     """Submit Flux Fill job and poll for result."""
     fal_key = get_fal_key()
@@ -164,11 +214,11 @@ class handler(BaseHTTPRequestHandler):
 
             # Extract fields
             image_b64 = data.get("image")  # base64 data URL
-            wheel_positions = data.get("wheels", [])
             wheel_id = data.get("wheel_id")
+            client_wheels = data.get("wheels", [])  # fallback if server detection fails
 
-            if not image_b64 or not wheel_positions or not wheel_id:
-                return self._error(400, "Missing required fields: image, wheels, wheel_id")
+            if not image_b64 or not wheel_id:
+                return self._error(400, "Missing required fields: image, wheel_id")
 
             if not get_fal_key():
                 return self._error(500, "FAL_KEY not configured")
@@ -184,35 +234,61 @@ class handler(BaseHTTPRequestHandler):
                 image_b64 = image_b64.split(",", 1)[1]
             image_bytes = base64.b64decode(image_b64)
 
-            # Get image dimensions
             from PIL import Image
             from io import BytesIO
             img = Image.open(BytesIO(image_bytes))
             img_width, img_height = img.size
 
-            # Create mask
+            # Step 1: Upload image to fal.ai
+            image_url = upload_to_fal(image_bytes, "car.png", "image/png")
+
+            # Step 2: Server-side Florence-2 detection (accurate wheel positions)
+            detected = detect_wheels_florence(image_url)
+
+            # Scale detected coords back to original image dimensions
+            wheel_positions = []
+            detection_method = "client"
+
+            if detected:
+                sw = detected[0].get("_source_w", img_width)
+                sh = detected[0].get("_source_h", img_height)
+                scale_x = img_width / sw
+                scale_y = img_height / sh
+                for w in detected:
+                    wheel_positions.append({
+                        "x": w["x"] * scale_x,
+                        "y": w["y"] * scale_y,
+                        "width": w["width"] * scale_x,
+                        "height": w["height"] * scale_y
+                    })
+                detection_method = "florence-2"
+            elif client_wheels:
+                wheel_positions = client_wheels
+            else:
+                return self._error(400, "No wheels detected and no client positions provided")
+
+            # Step 3: Create mask with accurate wheel positions
             mask_bytes = create_mask_image(img_width, img_height, wheel_positions)
             if not mask_bytes:
                 return self._error(500, "Failed to create mask")
 
-            # Upload both to fal.ai
-            image_url = upload_to_fal(image_bytes, "car.png", "image/png")
             mask_url = upload_to_fal(mask_bytes, "mask.png", "image/png")
 
-            # Build prompt
+            # Step 4: Build prompt
             prompt = build_wheel_prompt(wheel)
 
-            # Run inpainting
+            # Step 5: Run Flux Fill inpainting
             result_url, error = run_flux_fill(image_url, mask_url, prompt)
 
             if error:
                 return self._error(500, error)
 
-            # Success
             self._json({
                 "success": True,
                 "result_url": result_url,
                 "wheel_applied": wheel["name"],
+                "detection_method": detection_method,
+                "wheels_found": len(wheel_positions),
                 "prompt": prompt
             })
 
