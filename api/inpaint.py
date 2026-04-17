@@ -164,21 +164,25 @@ def detect_wheels_florence(image_url):
     return []
 
 
-def run_seedream_edit(car_url, wheel_url, prompt):
-    """Submit Seedream v4 edit with car + wheel reference (most accurate wheel transfer).
+def run_nano_banana_edit(car_url, wheel_url, prompt):
+    """Submit Nano Banana Pro edit (Gemini 3 Pro Image) for precise wheel transfer.
 
-    Why Seedream: tested against FLUX.2, Nano Banana Pro — Seedream gives the most
-    accurate copy of reference wheel design (spokes, color, finish) at $0.04/image, 5-10s.
+    Why Nano Banana Pro: tested against FLUX.2 Pro and Seedream v4 on 3 different
+    wheel styles (bronze split-spoke, chrome mesh, silver 10-spoke). Only Nano Banana
+    consistently reproduced the exact reference wheel design on all 3 — others failed
+    on complex patterns. It's a reasoning model that semantically understands "copy
+    this specific object while preserving the rest".
     """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/bytedance/seedream/v4/edit",
+        "https://queue.fal.run/fal-ai/nano-banana-pro/edit",
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
             "num_images": 1,
+            "output_format": "jpeg",
         },
         headers=headers,
         timeout=30
@@ -259,8 +263,8 @@ class handler(BaseHTTPRequestHandler):
             # Step 3: Build prompt referencing both images
             prompt = build_wheel_prompt(wheel)
 
-            # Step 4: Run Seedream v4 edit with car + wheel reference
-            result_url, error = run_seedream_edit(car_url, wheel_url, prompt)
+            # Step 4: Run Nano Banana Pro edit (most accurate on varied wheel designs)
+            result_url, error = run_nano_banana_edit(car_url, wheel_url, prompt)
 
             if error:
                 return self._error(500, error)
@@ -269,7 +273,7 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "result_url": result_url,
                 "wheel_applied": wheel["name"],
-                "model": "seedream/v4/edit",
+                "model": "nano-banana-pro/edit",
                 "reference_urls": {"car": car_url, "wheel": wheel_url},
                 "prompt": prompt
             })
