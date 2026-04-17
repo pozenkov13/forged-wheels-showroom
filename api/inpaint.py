@@ -32,18 +32,29 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    """Build detailed prompt describing target wheel for inpainting."""
-    name = wheel.get("name", "forged wheel")
+    """Build detailed editing prompt for Flux Kontext."""
     category = wheel.get("category", "forged")
     finish = wheel.get("finish", "metallic")
     sizes = wheel.get("sizes", ["20"])
 
+    # Category-specific description
+    category_desc = {
+        "monoblock": "solid monoblock forged wheels with clean thick spokes",
+        "concave": "deep concave forged wheels with curved elegant spokes",
+        "mesh": "intricate mesh pattern wheels with many thin crossing spokes",
+        "split-spoke": "aggressive split-spoke forged wheels with Y-pattern double arms",
+        "multi-piece": "3-piece forged wheels with visible rivets on the lip and stepped barrel",
+    }
+
+    desc = category_desc.get(category, "forged aluminum wheels")
+
     return (
-        f"photorealistic {category} forged aluminum alloy car wheel, "
-        f"{finish} finish, {sizes[0]}-inch wheel rim, "
-        "installed on car, correct perspective, realistic metallic reflections, "
-        "sharp detail, professional automotive photography, "
-        "seamlessly integrated with car body, correct lighting and shadows"
+        f"Replace both wheels on this car with premium {desc}, "
+        f"{finish} finish, {sizes[0]}-inch diameter. "
+        f"Keep the car body, color, position, perspective, and background completely unchanged. "
+        f"The new wheels must fit precisely inside the wheel arches with correct angle, "
+        f"realistic metallic reflections, proper shadows, and seamless integration. "
+        f"Photorealistic automotive photography."
     )
 
 
@@ -150,29 +161,26 @@ def detect_wheels_florence(image_url):
     return []
 
 
-def run_flux_fill(image_url, mask_url, prompt):
-    """Submit Flux Fill job and poll for result."""
+def run_flux_kontext(image_url, prompt):
+    """Submit Flux Kontext job (reference-based image editing) and poll for result."""
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
-    # Submit
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/flux-pro/v1/fill",
+        "https://queue.fal.run/fal-ai/flux-pro/kontext",
         json={
             "image_url": image_url,
-            "mask_url": mask_url,
             "prompt": prompt,
             "num_inference_steps": 28,
             "guidance_scale": 3.5,
             "num_images": 1,
-            "safety_tolerance": "6"
         },
         headers=headers,
         timeout=30
     )
 
     if submit_resp.status_code != 200:
-        return None, f"Submit failed: {submit_resp.status_code}"
+        return None, f"Submit failed: {submit_resp.status_code} {submit_resp.text[:200]}"
 
     response_url = submit_resp.json().get("response_url")
     if not response_url:
@@ -234,51 +242,15 @@ class handler(BaseHTTPRequestHandler):
                 image_b64 = image_b64.split(",", 1)[1]
             image_bytes = base64.b64decode(image_b64)
 
-            from PIL import Image
-            from io import BytesIO
-            img = Image.open(BytesIO(image_bytes))
-            img_width, img_height = img.size
-
-            # Step 1: Upload image to fal.ai
+            # Step 1: Upload car photo to fal.ai
             image_url = upload_to_fal(image_bytes, "car.png", "image/png")
 
-            # Step 2: Server-side Florence-2 detection (accurate wheel positions)
-            detected = detect_wheels_florence(image_url)
-
-            # Scale detected coords back to original image dimensions
-            wheel_positions = []
-            detection_method = "client"
-
-            if detected:
-                sw = detected[0].get("_source_w", img_width)
-                sh = detected[0].get("_source_h", img_height)
-                scale_x = img_width / sw
-                scale_y = img_height / sh
-                for w in detected:
-                    wheel_positions.append({
-                        "x": w["x"] * scale_x,
-                        "y": w["y"] * scale_y,
-                        "width": w["width"] * scale_x,
-                        "height": w["height"] * scale_y
-                    })
-                detection_method = "florence-2"
-            elif client_wheels:
-                wheel_positions = client_wheels
-            else:
-                return self._error(400, "No wheels detected and no client positions provided")
-
-            # Step 3: Create mask with accurate wheel positions
-            mask_bytes = create_mask_image(img_width, img_height, wheel_positions)
-            if not mask_bytes:
-                return self._error(500, "Failed to create mask")
-
-            mask_url = upload_to_fal(mask_bytes, "mask.png", "image/png")
-
-            # Step 4: Build prompt
+            # Step 2: Build editing prompt describing target wheel
             prompt = build_wheel_prompt(wheel)
 
-            # Step 5: Run Flux Fill inpainting
-            result_url, error = run_flux_fill(image_url, mask_url, prompt)
+            # Step 3: Run Flux Kontext (reference-based image editing)
+            # Kontext understands context — finds wheels automatically and replaces
+            result_url, error = run_flux_kontext(image_url, prompt)
 
             if error:
                 return self._error(500, error)
@@ -287,8 +259,7 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "result_url": result_url,
                 "wheel_applied": wheel["name"],
-                "detection_method": detection_method,
-                "wheels_found": len(wheel_positions),
+                "model": "flux-pro/kontext",
                 "prompt": prompt
             })
 
