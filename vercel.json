@@ -3,7 +3,7 @@
   "outputDirectory": ".",
   "functions": {
     "api/inpaint.py": {
-      "maxDuration": 120,
+      "maxDuration": 300,
       "memory": 1024
     },
     "api/index.py": {

@@ -32,30 +32,35 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    """Build detailed editing prompt for Flux Kontext."""
+    """Build prompt for FLUX.2 edit with car + wheel reference."""
     category = wheel.get("category", "forged")
     finish = wheel.get("finish", "metallic")
-    sizes = wheel.get("sizes", ["20"])
 
-    # Category-specific description
     category_desc = {
-        "monoblock": "solid monoblock forged wheels with clean thick spokes",
-        "concave": "deep concave forged wheels with curved elegant spokes",
-        "mesh": "intricate mesh pattern wheels with many thin crossing spokes",
-        "split-spoke": "aggressive split-spoke forged wheels with Y-pattern double arms",
-        "multi-piece": "3-piece forged wheels with visible rivets on the lip and stepped barrel",
+        "monoblock": "solid monoblock design with thick clean spokes",
+        "concave": "deep concave profile with curved elegant spokes",
+        "mesh": "intricate mesh pattern with many thin crossing spokes",
+        "split-spoke": "aggressive split-spoke Y-pattern design",
+        "multi-piece": "3-piece forged construction with visible rivets on the lip",
     }
-
-    desc = category_desc.get(category, "forged aluminum wheels")
+    desc = category_desc.get(category, "forged design")
 
     return (
-        f"Replace both wheels on this car with premium {desc}, "
-        f"{finish} finish, {sizes[0]}-inch diameter. "
-        f"Keep the car body, color, position, perspective, and background completely unchanged. "
-        f"The new wheels must fit precisely inside the wheel arches with correct angle, "
-        f"realistic metallic reflections, proper shadows, and seamless integration. "
-        f"Photorealistic automotive photography."
+        f"Replace both wheels of the car shown in image 1 with the EXACT wheel design from image 2. "
+        f"Copy every detail from image 2: spoke pattern ({desc}), colors ({finish} finish), proportions, and style. "
+        f"Keep the car body, color, windows, background, street, buildings, and lighting completely unchanged from image 1. "
+        f"The replacement wheels must fit precisely inside the wheel arches with correct perspective and realistic shadows. "
+        f"Photorealistic, seamless integration."
     )
+
+
+def load_wheel_png_bytes(wheel_id):
+    """Load wheel PNG file as bytes."""
+    wheel_path = Path(__file__).parent.parent / "wheels" / f"{wheel_id}.png"
+    if wheel_path.exists():
+        with open(wheel_path, "rb") as f:
+            return f.read()
+    return None
 
 
 def create_mask_image(image_width, image_height, wheel_positions):
@@ -161,19 +166,18 @@ def detect_wheels_florence(image_url):
     return []
 
 
-def run_flux_kontext(image_url, prompt):
-    """Submit Flux Kontext job (reference-based image editing) and poll for result."""
+def run_flux2_edit(car_url, wheel_url, prompt):
+    """Submit FLUX.2 edit with car photo + wheel reference and poll for result."""
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/flux-pro/kontext",
+        "https://queue.fal.run/fal-ai/flux-2/edit",
         json={
-            "image_url": image_url,
+            "image_urls": [car_url, wheel_url],
             "prompt": prompt,
             "num_inference_steps": 28,
             "guidance_scale": 3.5,
-            "num_images": 1,
         },
         headers=headers,
         timeout=30
@@ -186,8 +190,8 @@ def run_flux_kontext(image_url, prompt):
     if not response_url:
         return None, "No response_url"
 
-    # Poll (max 90s)
-    for _ in range(45):
+    # Poll (max 3 min — FLUX.2 is slower)
+    for _ in range(90):
         time.sleep(2)
         poll_resp = requests.get(response_url, headers=headers, timeout=30)
         if poll_resp.status_code != 200:
@@ -237,20 +241,25 @@ class handler(BaseHTTPRequestHandler):
             if not wheel:
                 return self._error(404, f"Wheel {wheel_id} not found")
 
-            # Decode image
+            # Decode car image
             if "," in image_b64:
                 image_b64 = image_b64.split(",", 1)[1]
             image_bytes = base64.b64decode(image_b64)
 
-            # Step 1: Upload car photo to fal.ai
-            image_url = upload_to_fal(image_bytes, "car.png", "image/png")
+            # Step 1: Load wheel reference PNG from catalog
+            wheel_bytes = load_wheel_png_bytes(wheel_id)
+            if not wheel_bytes:
+                return self._error(404, f"Wheel PNG not found for id={wheel_id}")
 
-            # Step 2: Build editing prompt describing target wheel
+            # Step 2: Upload BOTH images to fal.ai
+            car_url = upload_to_fal(image_bytes, "car.png", "image/png")
+            wheel_url = upload_to_fal(wheel_bytes, f"{wheel_id}.png", "image/png")
+
+            # Step 3: Build prompt referencing both images
             prompt = build_wheel_prompt(wheel)
 
-            # Step 3: Run Flux Kontext (reference-based image editing)
-            # Kontext understands context — finds wheels automatically and replaces
-            result_url, error = run_flux_kontext(image_url, prompt)
+            # Step 4: Run FLUX.2 edit with car + wheel reference
+            result_url, error = run_flux2_edit(car_url, wheel_url, prompt)
 
             if error:
                 return self._error(500, error)
@@ -259,7 +268,8 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "result_url": result_url,
                 "wheel_applied": wheel["name"],
-                "model": "flux-pro/kontext",
+                "model": "flux-2/edit",
+                "reference_urls": {"car": car_url, "wheel": wheel_url},
                 "prompt": prompt
             })
 
