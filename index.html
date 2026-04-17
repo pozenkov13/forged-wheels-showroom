@@ -1856,6 +1856,30 @@
             0%, 100% { box-shadow: 0 0 20px rgba(34,197,94,0.3), inset 0 0 20px rgba(34,197,94,0.05); }
             50% { box-shadow: 0 0 35px rgba(34,197,94,0.5), inset 0 0 30px rgba(34,197,94,0.1); }
         }
+
+        /* AI-placed wheel overlay — realistic replacement */
+        .wheel-overlay-ai {
+            position: absolute;
+            pointer-events: auto;
+        }
+        .wheel-overlay-ai .wo-mask {
+            position: absolute;
+            inset: 10%;
+            background: radial-gradient(circle, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.7) 60%, transparent 100%);
+            border-radius: 50%;
+            z-index: 1;
+            filter: blur(3px);
+        }
+        .wheel-overlay-ai .wo-shadow {
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 10%;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, transparent 70%);
+            filter: blur(4px);
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -2688,13 +2712,14 @@
             // Remove old overlays and markers
             document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
 
-            // Place wheel EXACTLY on each detected position
+            // Place wheel EXACTLY on each detected position — LARGER with mask
             detectedWheelPositions.forEach((w, i) => {
                 const overlay = document.createElement('div');
-                overlay.className = 'wheel-overlay';
+                overlay.className = 'wheel-overlay wheel-overlay-ai';
 
-                // Match detected wheel size exactly
-                const size = Math.max(w.width * scaleX, w.height * scaleY);
+                // Make wheel 1.4x larger than detected bbox to cover original wheel
+                const detectedSize = Math.max(w.width * scaleX, w.height * scaleY);
+                const size = detectedSize * 1.4;
 
                 overlay.style.width = size + 'px';
                 overlay.style.height = size + 'px';
@@ -2705,7 +2730,9 @@
                 overlay.style.top = (centerY - size / 2) + 'px';
 
                 overlay.innerHTML = `
-                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;border-radius:50%;">
+                    <div class="wo-mask"></div>
+                    <div class="wo-shadow"></div>
+                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;position:relative;z-index:3;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
                     <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
                 `;
                 canvasArea.appendChild(overlay);
