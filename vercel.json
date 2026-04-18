@@ -6,12 +6,17 @@
       "maxDuration": 300,
       "memory": 1024
     },
+    "api/remove_bg.py": {
+      "maxDuration": 120,
+      "memory": 512
+    },
     "api/index.py": {
       "maxDuration": 30
     }
   },
   "rewrites": [
     { "source": "/api/inpaint", "destination": "/api/inpaint" },
+    { "source": "/api/remove_bg", "destination": "/api/remove_bg" },
     { "source": "/api/(.*)", "destination": "/api/index" }
   ],
   "headers": [

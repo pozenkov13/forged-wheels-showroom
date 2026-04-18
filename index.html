@@ -1826,6 +1826,258 @@
             100% { width: 100%; }
         }
 
+        /* Custom wheel upload — floating badge on the showroom wall */
+        .custom-wheel-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 12;
+            background: linear-gradient(135deg, rgba(200,163,61,0.95) 0%, rgba(224,192,90,0.95) 100%);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #1a1a24;
+            font-family: var(--sans);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 16px rgba(200,163,61,0.25);
+        }
+        .custom-wheel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(200,163,61,0.35);
+        }
+
+        /* Preview of uploaded custom wheel — shows at bottom-right of showroom */
+        .custom-wheel-preview {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 14;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            max-width: 280px;
+        }
+        .custom-wheel-preview img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+        }
+        .custom-wheel-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+        }
+        .custom-wheel-label {
+            color: #fff;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .custom-wheel-try {
+            background: var(--gold);
+            border: none;
+            color: #1a1a24;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .custom-wheel-try:hover {
+            background: var(--gold-light);
+            transform: translateY(-1px);
+        }
+        .custom-wheel-remove {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            background: #e44;
+            color: #fff;
+            border: 2px solid rgba(0,0,0,0.8);
+            border-radius: 50%;
+            font-size: 14px;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Floating "Change car" button — always accessible on canvas */
+        .change-car-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 25;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .change-car-btn:hover {
+            background: rgba(0,0,0,0.9);
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: translateY(-1px);
+        }
+
+        /* AI Processing Overlay - полноэкранный loading поверх фото */
+        .ai-processing-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Shimmer sweep across photo */
+        .ai-processing-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -60%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,255,255,0.08) 30%,
+                rgba(200,163,61,0.18) 50%,
+                rgba(255,255,255,0.08) 70%,
+                transparent 100%
+            );
+            animation: aiShimmerSweep 2.2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes aiShimmerSweep {
+            0% { left: -60%; }
+            100% { left: 100%; }
+        }
+
+        /* Scanning lines effect */
+        .ai-processing-overlay::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 4px,
+                rgba(200,163,61,0.04) 4px,
+                rgba(200,163,61,0.04) 5px
+            );
+            pointer-events: none;
+            animation: scanlinesDrift 3s linear infinite;
+        }
+        @keyframes scanlinesDrift {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 8px; }
+        }
+
+        /* Central spinner with wheel icon */
+        .ai-proc-spinner {
+            width: 72px;
+            height: 72px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: var(--gold);
+            border-right-color: var(--gold-light);
+            border-radius: 50%;
+            animation: spinWheel 1.2s linear infinite;
+            position: relative;
+            z-index: 2;
+        }
+        @keyframes spinWheel {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .ai-proc-text {
+            color: #fff;
+            font-family: var(--sans);
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 2;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+        }
+        .ai-proc-subtext {
+            color: rgba(255,255,255,0.7);
+            font-family: var(--sans);
+            font-size: 13px;
+            font-weight: 400;
+            text-align: center;
+            z-index: 2;
+            margin-top: -16px;
+        }
+        .ai-proc-timer {
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        /* Stage dots — visual progress of pipeline */
+        .ai-proc-stages {
+            display: flex;
+            gap: 8px;
+            z-index: 2;
+        }
+        .ai-proc-stage {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.4s ease;
+        }
+        .ai-proc-stage.active {
+            background: var(--gold);
+            box-shadow: 0 0 12px rgba(200,163,61,0.6);
+            transform: scale(1.2);
+        }
+        .ai-proc-stage.done {
+            background: #22c55e;
+        }
+
         /* Green detection markers */
         .ai-marker {
             position: absolute;
@@ -1926,6 +2178,27 @@
                 <div class="shelf-ledge"></div>
             </div>
 
+            <!-- Custom wheel upload — floating badge on the shelf -->
+            <button class="custom-wheel-btn" onclick="document.getElementById('customWheelInput').click()" title="Upload your own wheel photo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                <span>Your wheel</span>
+            </button>
+            <input type="file" id="customWheelInput" accept="image/*" style="display:none">
+
+            <!-- Preview of uploaded custom wheel -->
+            <div class="custom-wheel-preview" id="customWheelPreview" style="display:none;">
+                <img id="customWheelImg" src="" alt="Your wheel">
+                <div class="custom-wheel-info">
+                    <div class="custom-wheel-label">Your custom wheel</div>
+                    <button class="custom-wheel-try" onclick="tryCustomWheel()">Try on car</button>
+                    <button class="custom-wheel-remove" onclick="removeCustomWheel()" title="Remove">×</button>
+                </div>
+            </div>
+
             <!-- Fitting stand (car area) -->
             <div class="fitting-stand" id="fittingStand">
                 <!-- Before upload: silhouette -->
@@ -1962,6 +2235,11 @@
                 <!-- After upload: car photo + overlays -->
                 <div class="canvas-area" id="canvasArea" style="display:none;">
                     <img id="carPhoto" src="" alt="Your car">
+                    <!-- Floating change-car button, always accessible -->
+                    <button class="change-car-btn" onclick="resetUpload()" title="Change car photo">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        <span>Change car</span>
+                    </button>
                 </div>
 
                 <!-- Floor reflection -->
@@ -2540,6 +2818,149 @@
             if (file) loadPhoto(file);
         });
 
+        // ═══════════════════════════════════════════
+        // CUSTOM WHEEL UPLOAD (UX4 — user's own wheel photo)
+        // ═══════════════════════════════════════════
+
+        let customWheelDataUrl = null;  // bg-removed PNG data URL
+
+        const customWheelInput = document.getElementById('customWheelInput');
+        customWheelInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadCustomWheel(file);
+        });
+
+        async function loadCustomWheel(file) {
+            // Show immediate preview with raw image while bg-removal runs
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const rawDataUrl = ev.target.result;
+
+                // Show preview
+                const preview = document.getElementById('customWheelPreview');
+                const img = document.getElementById('customWheelImg');
+                img.src = rawDataUrl;
+                preview.style.display = 'flex';
+
+                // Show processing state
+                const label = preview.querySelector('.custom-wheel-label');
+                const tryBtn = preview.querySelector('.custom-wheel-try');
+                label.textContent = 'Removing background...';
+                tryBtn.disabled = true;
+                tryBtn.style.opacity = '0.5';
+
+                // Send to backend for background removal
+                try {
+                    const cleanedDataUrl = await removeWheelBackground(rawDataUrl);
+                    if (cleanedDataUrl) {
+                        customWheelDataUrl = cleanedDataUrl;
+                        img.src = cleanedDataUrl;
+                        label.textContent = 'Your custom wheel ✓';
+                    } else {
+                        // Fallback — use raw
+                        customWheelDataUrl = rawDataUrl;
+                        label.textContent = 'Your custom wheel';
+                    }
+                } catch (err) {
+                    console.warn('BG removal failed, using raw:', err);
+                    customWheelDataUrl = rawDataUrl;
+                    label.textContent = 'Your custom wheel';
+                }
+
+                tryBtn.disabled = false;
+                tryBtn.style.opacity = '1';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function removeWheelBackground(dataUrl) {
+            const resp = await fetch(API_BASE + '/api/remove_bg', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataUrl })
+            });
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            return data.image || null;  // backend returns dataURL of cleaned image
+        }
+
+        function removeCustomWheel() {
+            customWheelDataUrl = null;
+            document.getElementById('customWheelPreview').style.display = 'none';
+            document.getElementById('customWheelInput').value = '';
+            document.getElementById('customWheelImg').src = '';
+        }
+
+        async function tryCustomWheel() {
+            if (!customWheelDataUrl) return;
+            if (!lastUploadedPhoto) {
+                alert('Please upload a car photo first');
+                return;
+            }
+            // Run AI inpainting with custom wheel as reference
+            runAIInpaintingCustom(customWheelDataUrl);
+        }
+
+        async function runAIInpaintingCustom(wheelDataUrl) {
+            if (!lastUploadedPhoto || !wheelDataUrl) return;
+
+            document.querySelectorAll('.ai-status-bar').forEach(el => {
+                if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t));
+                el.remove();
+            });
+            showProcessingOverlay();
+
+            try {
+                const resp = await fetch(API_BASE + '/api/inpaint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: lastUploadedPhoto,
+                        wheel_id: 'custom',
+                        custom_wheel_image: wheelDataUrl
+                    })
+                });
+
+                const result = await resp.json();
+                if (result.success && result.result_url) {
+                    const tmpImg = new Image();
+                    tmpImg.crossOrigin = 'anonymous';
+                    tmpImg.onload = () => {
+                        carPhoto.src = result.result_url;
+                        document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+                        const stages = document.querySelectorAll('#aiProcOverlay .ai-proc-stage');
+                        stages.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+                        setTimeout(() => {
+                            removeProcessingOverlay();
+                            updateSourceToCurrentImage(result.result_url);
+                            const banner = document.createElement('div');
+                            banner.className = 'ai-status-bar ai-success';
+                            banner.innerHTML = `<div class="ai-status-icon">🎉</div><div class="ai-status-text">Your custom wheel applied to the car!</div>`;
+                            canvasArea.appendChild(banner);
+                            setTimeout(() => banner.remove(), 4000);
+                        }, 400);
+                    };
+                    tmpImg.onerror = () => {
+                        carPhoto.src = result.result_url;
+                        removeProcessingOverlay();
+                        updateSourceToCurrentImage(result.result_url);
+                    };
+                    tmpImg.src = result.result_url;
+                } else {
+                    removeProcessingOverlay();
+                    const banner = document.createElement('div');
+                    banner.className = 'ai-status-bar';
+                    banner.style.background = 'rgba(180,40,40,0.9)';
+                    banner.innerHTML = `<div class="ai-status-icon">⚠️</div><div class="ai-status-text">AI rendering failed. Try a clearer wheel photo.</div>`;
+                    canvasArea.appendChild(banner);
+                    setTimeout(() => banner.remove(), 4000);
+                }
+            } catch (err) {
+                removeProcessingOverlay();
+                console.error('Custom inpaint error:', err);
+            }
+        }
+
         function loadPhoto(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -2714,30 +3135,71 @@
         // AI INPAINTING — REAL wheel replacement via fal.ai
         // ═══════════════════════════════════════════
 
+        function showProcessingOverlay() {
+            removeProcessingOverlay();
+            const overlay = document.createElement('div');
+            overlay.className = 'ai-processing-overlay';
+            overlay.id = 'aiProcOverlay';
+            overlay.innerHTML = `
+                <div class="ai-proc-spinner"></div>
+                <div class="ai-proc-text" id="aiProcText">AI is rendering your wheels</div>
+                <div class="ai-proc-subtext"><span id="aiProcStageText">Analyzing wheel design</span> · <span class="ai-proc-timer" id="aiProcTimer">0s</span></div>
+                <div class="ai-proc-stages">
+                    <div class="ai-proc-stage active" data-stage="0"></div>
+                    <div class="ai-proc-stage" data-stage="1"></div>
+                    <div class="ai-proc-stage" data-stage="2"></div>
+                    <div class="ai-proc-stage" data-stage="3"></div>
+                </div>
+            `;
+            canvasArea.appendChild(overlay);
+
+            // Live timer
+            const startT = Date.now();
+            const timerInterval = setInterval(() => {
+                const el = document.getElementById('aiProcTimer');
+                if (el) el.textContent = Math.round((Date.now() - startT) / 1000) + 's';
+            }, 250);
+
+            // Stage progression (visual feedback only)
+            const stageMessages = [
+                'Analyzing wheel design',
+                'Detecting car wheels',
+                'Matching perspective and lighting',
+                'Rendering photorealistic result'
+            ];
+            let currentStage = 0;
+            const stageInterval = setInterval(() => {
+                if (currentStage < stageMessages.length - 1) {
+                    const stages = overlay.querySelectorAll('.ai-proc-stage');
+                    stages[currentStage].classList.remove('active');
+                    stages[currentStage].classList.add('done');
+                    currentStage++;
+                    stages[currentStage].classList.add('active');
+                    const txt = document.getElementById('aiProcStageText');
+                    if (txt) txt.textContent = stageMessages[currentStage];
+                }
+            }, 5500);
+
+            overlay._timers = [timerInterval, stageInterval];
+            return overlay;
+        }
+
+        function removeProcessingOverlay() {
+            const overlay = document.getElementById('aiProcOverlay');
+            if (overlay) {
+                if (overlay._timers) overlay._timers.forEach(t => clearInterval(t));
+                overlay.remove();
+            }
+        }
+
         async function runAIInpainting(wheelId) {
             if (!lastUploadedPhoto || !wheelId || detectedWheelPositions.length === 0) return;
 
-            // Show "AI rendering..." status
+            // Cleanup any status bars from detection phase
             document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
-            const statusBar = document.createElement('div');
-            statusBar.className = 'ai-status-bar';
-            statusBar.innerHTML = `
-                <div class="ai-status-icon">✨</div>
-                <div class="ai-status-text" id="aiStatusText">AI rendering your wheels... <span id="aiTimer">0s</span></div>
-                <div class="ai-status-progress"><div class="ai-progress-fill" style="animation-duration:30s;"></div></div>
-            `;
-            canvasArea.appendChild(statusBar);
 
-            // Live counter so user sees something is happening
-            const startT = Date.now();
-            const timerInterval = setInterval(() => {
-                const el = document.getElementById('aiTimer');
-                if (el) el.textContent = Math.round((Date.now() - startT) / 1000) + 's';
-            }, 500);
-            statusBar._phaseTimers = [timerInterval];
-            // Override clearTimeout to also clear interval
-            const origClear = statusBar._phaseTimers;
-            statusBar._clearFns = () => { clearInterval(timerInterval); };
+            // Show fullscreen processing overlay
+            showProcessingOverlay();
 
             // Use unified API_BASE (handles localhost, github.io, vercel.app)
             const inpaintUrl = API_BASE + '/api/inpaint';
@@ -2754,112 +3216,123 @@
                 });
 
                 const result = await resp.json();
-                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
 
                 if (result.success && result.result_url) {
-                    // Replace car photo with AI-generated result
-                    carPhoto.src = result.result_url;
-                    // Remove all overlays (AI already rendered wheels into the image)
-                    document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+                    // Preload the result image before swapping — prevents flicker
+                    const tmpImg = new Image();
+                    tmpImg.crossOrigin = 'anonymous';
+                    tmpImg.onload = () => {
+                        // Replace car photo with AI-generated result
+                        carPhoto.src = result.result_url;
+                        // Remove all overlays (AI already rendered wheels into the image)
+                        document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+                        // Mark all stages done
+                        const stages = document.querySelectorAll('#aiProcOverlay .ai-proc-stage');
+                        stages.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+                        // Small delay so user sees "complete" state
+                        setTimeout(() => {
+                            removeProcessingOverlay();
 
-                    const banner = document.createElement('div');
-                    banner.className = 'ai-status-bar ai-success';
-                    banner.innerHTML = `
-                        <div class="ai-status-icon">🎉</div>
-                        <div class="ai-status-text">AI rendered ${result.wheel_applied} on your car!</div>
-                    `;
-                    canvasArea.appendChild(banner);
-                    setTimeout(() => banner.remove(), 4000);
+                            // Reset for iterative try-on: make AI result the new source
+                            // so the next wheel selection runs AI on the already-modified car
+                            // Convert displayed image to dataURL for next API call
+                            updateSourceToCurrentImage(result.result_url);
+
+                            const banner = document.createElement('div');
+                            banner.className = 'ai-status-bar ai-success';
+                            banner.innerHTML = `
+                                <div class="ai-status-icon">🎉</div>
+                                <div class="ai-status-text">${result.wheel_applied} applied! Pick another wheel to try more.</div>
+                            `;
+                            canvasArea.appendChild(banner);
+                            setTimeout(() => banner.remove(), 4000);
+                        }, 400);
+                    };
+                    tmpImg.onerror = () => {
+                        // Fallback — just swap directly
+                        carPhoto.src = result.result_url;
+                        document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
+                        removeProcessingOverlay();
+                        updateSourceToCurrentImage(result.result_url);
+                    };
+                    tmpImg.src = result.result_url;
                 } else {
-                    // Fallback: show error, keep overlay
+                    removeProcessingOverlay();
                     const banner = document.createElement('div');
                     banner.className = 'ai-status-bar';
                     banner.style.background = 'rgba(180,40,40,0.9)';
                     banner.innerHTML = `
                         <div class="ai-status-icon">⚠️</div>
-                        <div class="ai-status-text">AI rendering unavailable. Showing preview overlay.</div>
+                        <div class="ai-status-text">AI rendering unavailable. Try again.</div>
                     `;
                     canvasArea.appendChild(banner);
                     setTimeout(() => banner.remove(), 4000);
                 }
             } catch (err) {
-                document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
+                removeProcessingOverlay();
                 console.error('Inpaint error:', err);
+                const banner = document.createElement('div');
+                banner.className = 'ai-status-bar';
+                banner.style.background = 'rgba(180,40,40,0.9)';
+                banner.innerHTML = `<div class="ai-status-icon">⚠️</div><div class="ai-status-text">Network error. Please try again.</div>`;
+                canvasArea.appendChild(banner);
+                setTimeout(() => banner.remove(), 4000);
+            }
+        }
+
+        // After a successful AI render, make the result image the new source
+        // so next try-on runs on the already-modified car
+        async function updateSourceToCurrentImage(newImageUrl) {
+            try {
+                // Fetch the AI-rendered image and convert to dataURL
+                const resp = await fetch(newImageUrl);
+                const blob = await resp.blob();
+                const reader = new FileReader();
+                reader.onload = () => {
+                    lastUploadedPhoto = reader.result;
+                    // Clear old detection so next wheel triggers fresh detection on new image
+                    detectedWheelPositions = [];
+                };
+                reader.readAsDataURL(blob);
+            } catch (e) {
+                console.warn('Could not update source image for iterative try-on:', e);
             }
         }
 
         // When user selects a wheel — place overlay + trigger AI inpainting
-        function placeWheelOnDetected(wheelImg, wheelId) {
-            if (detectedWheelPositions.length === 0) {
+        async function placeWheelOnDetected(wheelImg, wheelId) {
+            if (!wheelId || !lastUploadedPhoto) {
                 addWheelOverlay();
                 return;
             }
 
             currentWheelId = wheelId;
 
-            const canvasRect = canvasArea.getBoundingClientRect();
-            const imgRect = carPhoto.getBoundingClientRect();
-            const scaleX = imgRect.width / carPhoto.naturalWidth;
-            const scaleY = imgRect.height / carPhoto.naturalHeight;
-            const offsetX = imgRect.left - canvasRect.left;
-            const offsetY = imgRect.top - canvasRect.top;
-
-            // Remove old overlays and markers
+            // Remove old overlays and markers — we go straight to AI
             document.querySelectorAll('.wheel-overlay, .ai-marker').forEach(el => el.remove());
 
-            // Place wheel EXACTLY on each detected position — LARGER with mask
-            detectedWheelPositions.forEach((w, i) => {
-                const overlay = document.createElement('div');
-                overlay.className = 'wheel-overlay wheel-overlay-ai';
-
-                // Make wheel 1.4x larger than detected bbox to cover original wheel
-                const detectedSize = Math.max(w.width * scaleX, w.height * scaleY);
-                const size = detectedSize * 1.4;
-
-                overlay.style.width = size + 'px';
-                overlay.style.height = size + 'px';
-                // Center on the detected wheel position
-                const centerX = offsetX + (w.x * scaleX) + (w.width * scaleX / 2);
-                const centerY = offsetY + (w.y * scaleY) + (w.height * scaleY / 2);
-                overlay.style.left = (centerX - size / 2) + 'px';
-                overlay.style.top = (centerY - size / 2) + 'px';
-
-                overlay.innerHTML = `
-                    <div class="wo-mask"></div>
-                    <div class="wo-shadow"></div>
-                    <img class="wo-img" src="${wheelImg}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;position:relative;z-index:3;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));">
-                    <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
-                `;
-                canvasArea.appendChild(overlay);
-                makeDraggable(overlay);
-            });
-
-            // Show preview banner briefly
-            const banner = document.createElement('div');
-            banner.className = 'ai-status-bar ai-success';
-            banner.innerHTML = `
-                <div class="ai-status-icon">🛞</div>
-                <div class="ai-status-text">Preview applied! Starting AI render...</div>
-            `;
-            canvasArea.appendChild(banner);
-            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 2000);
-
-            // Trigger real AI inpainting for photorealistic result
-            if (wheelId) {
-                setTimeout(() => runAIInpainting(wheelId), 2200);
-            }
+            // If we don't have detections (e.g. this is an iterative try-on on AI result),
+            // the server will detect from scratch. We pass empty array — backend handles it.
+            // Directly trigger AI inpainting — skip preview overlay for cleaner UX
+            runAIInpainting(wheelId);
         }
 
         function resetUpload() {
             fileInput.value = '';
+            carPhoto.src = '';
             carSilhouette.style.display = '';
             canvasArea.style.display = 'none';
             configActions.style.display = 'none';
             showroomControls.style.display = 'none';
             showroomRoom.classList.add('showroom-dormant');
             showroomRoom.classList.remove('showroom-active');
-            document.querySelectorAll('.wheel-overlay').forEach(el => el.remove());
+            document.querySelectorAll('.wheel-overlay, .ai-marker, .ai-status-bar, .ai-processing-overlay').forEach(el => el.remove());
+            removeProcessingOverlay();
             wheelOverlayCount = 0;
+            // Reset AI state for clean new session
+            lastUploadedPhoto = null;
+            detectedWheelPositions = [];
+            currentWheelId = null;
         }
 
         // Drag-drop file onto fitting stand

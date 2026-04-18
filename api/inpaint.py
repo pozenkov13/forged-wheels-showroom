@@ -230,9 +230,10 @@ class handler(BaseHTTPRequestHandler):
             data = json.loads(body)
 
             # Extract fields
-            image_b64 = data.get("image")  # base64 data URL
+            image_b64 = data.get("image")  # base64 data URL of car photo
             wheel_id = data.get("wheel_id")
-            client_wheels = data.get("wheels", [])  # fallback if server detection fails
+            client_wheels = data.get("wheels", [])  # kept for backward-compat
+            custom_wheel_image = data.get("custom_wheel_image")  # base64 dataURL of user-uploaded wheel
 
             if not image_b64 or not wheel_id:
                 return self._error(400, "Missing required fields: image, wheel_id")
@@ -240,30 +241,43 @@ class handler(BaseHTTPRequestHandler):
             if not get_fal_key():
                 return self._error(500, "FAL_KEY not configured")
 
-            # Find wheel in catalog
-            catalog = load_catalog()
-            wheel = next((w for w in catalog if w["id"] == wheel_id), None)
-            if not wheel:
-                return self._error(404, f"Wheel {wheel_id} not found")
-
             # Decode car image
             if "," in image_b64:
                 image_b64 = image_b64.split(",", 1)[1]
             image_bytes = base64.b64decode(image_b64)
 
-            # Step 1: Load wheel reference PNG from catalog
-            wheel_bytes = load_wheel_png_bytes(wheel_id)
-            if not wheel_bytes:
-                return self._error(404, f"Wheel PNG not found for id={wheel_id}")
+            # Resolve wheel reference: either catalog PNG or custom upload
+            is_custom = wheel_id == "custom" and custom_wheel_image
+            if is_custom:
+                # Decode custom wheel image from client
+                custom_b64 = custom_wheel_image
+                if "," in custom_b64:
+                    custom_b64 = custom_b64.split(",", 1)[1]
+                wheel_bytes = base64.b64decode(custom_b64)
+                wheel_display_name = "Your custom wheel"
+                # Generic prompt for user-provided wheel
+                prompt = (
+                    "Take the car from image 1. Change both of its wheels to look exactly "
+                    "like the wheel rim shown in image 2. The car, body color, background, "
+                    "and lighting must stay identical. Only the wheels change."
+                )
+            else:
+                # Catalog wheel
+                catalog = load_catalog()
+                wheel = next((w for w in catalog if w["id"] == wheel_id), None)
+                if not wheel:
+                    return self._error(404, f"Wheel {wheel_id} not found")
+                wheel_bytes = load_wheel_png_bytes(wheel_id)
+                if not wheel_bytes:
+                    return self._error(404, f"Wheel PNG not found for id={wheel_id}")
+                wheel_display_name = wheel["name"]
+                prompt = build_wheel_prompt(wheel)
 
-            # Step 2: Upload BOTH images to fal.ai
+            # Upload BOTH images to fal.ai
             car_url = upload_to_fal(image_bytes, "car.png", "image/png")
             wheel_url = upload_to_fal(wheel_bytes, f"{wheel_id}.png", "image/png")
 
-            # Step 3: Build prompt referencing both images
-            prompt = build_wheel_prompt(wheel)
-
-            # Step 4: Run Nano Banana Pro edit (most accurate on varied wheel designs)
+            # Run Nano Banana Pro edit
             result_url, error = run_nano_banana_edit(car_url, wheel_url, prompt)
 
             if error:
@@ -272,8 +286,9 @@ class handler(BaseHTTPRequestHandler):
             self._json({
                 "success": True,
                 "result_url": result_url,
-                "wheel_applied": wheel["name"],
+                "wheel_applied": wheel_display_name,
                 "model": "nano-banana-pro/edit",
+                "is_custom": is_custom,
                 "reference_urls": {"car": car_url, "wheel": wheel_url},
                 "prompt": prompt
             })
