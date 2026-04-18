@@ -3346,11 +3346,25 @@
         }
 
         // Drag-drop file onto fitting stand
-        fittingStand.addEventListener('dragover', (e) => { e.preventDefault(); fittingStand.classList.add('drop-active'); });
+        fittingStand.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            // Only show drop-active state if canvas is empty (before photo upload)
+            if (canvasArea.style.display === 'none') {
+                fittingStand.classList.add('drop-active');
+            }
+        });
         fittingStand.addEventListener('dragleave', () => { fittingStand.classList.remove('drop-active'); });
         fittingStand.addEventListener('drop', (e) => {
             e.preventDefault();
             fittingStand.classList.remove('drop-active');
+
+            // If car is already loaded — ignore file drops on fittingStand.
+            // Any drop on the car area should be handled by canvasArea (shelf wheel drops).
+            if (canvasArea.style.display !== 'none') {
+                return;
+            }
+
+            // Only accept file drops when no car is loaded yet (initial upload)
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) loadPhoto(file);
         });
@@ -3616,25 +3630,41 @@
             });
         }
 
-        // Handle drops from dynamic shelf onto canvas
+        // Handle drops from dynamic shelf onto canvas (on top of loaded car photo)
         if (canvasArea) {
-            canvasArea.addEventListener('dragover', (e) => e.preventDefault());
+            canvasArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
             canvasArea.addEventListener('drop', (e) => {
                 e.preventDefault();
-                try {
-                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    if (data && data.img) {
-                        if (detectedWheelPositions.length > 0) {
+                e.stopPropagation();
+
+                // 1) Try JSON data from shelf drag (our own wheels)
+                const plainData = e.dataTransfer.getData('text/plain');
+                if (plainData) {
+                    try {
+                        const data = JSON.parse(plainData);
+                        if (data && data.img && data.id) {
+                            // It's a shelf wheel — place on detected positions (or detect first)
                             placeWheelOnDetected(data.img, data.id);
-                        } else {
-                            // Manual placement at drop position
-                            const rect = canvasArea.getBoundingClientRect();
-                            const relX = e.clientX - rect.left;
-                            const relY = e.clientY - rect.top;
-                            addWheelOverlayAt(0, relX, relY);
+                            return;
                         }
+                    } catch(err) {
+                        // Not JSON — might be plain URL or text, ignore
                     }
-                } catch(err) {}
+                }
+
+                // 2) File drop (image from OS or another tab)
+                const file = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    // Treat as "upload your wheel" — same flow as clicking Upload Your Wheel
+                    loadCustomWheel(file);
+                    return;
+                }
+
+                // 3) Everything else — silently ignore (prevents rogue browser drops
+                //    from overwriting the car photo)
             });
         }
 
