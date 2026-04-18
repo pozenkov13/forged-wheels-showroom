@@ -1149,16 +1149,12 @@
             bottom: -1px;
             left: 0;
             right: 0;
-            height: 45%;
+            height: 22%;
             background: linear-gradient(to bottom,
                 transparent 0%,
-                rgba(218,182,114,0.05) 15%,
-                rgba(218,182,114,0.15) 30%,
-                rgba(218,182,114,0.35) 45%,
-                rgba(218,182,114,0.55) 58%,
-                rgba(218,182,114,0.75) 70%,
-                rgba(218,182,114,0.9) 82%,
-                #dab672 95%,
+                rgba(218,182,114,0.15) 40%,
+                rgba(218,182,114,0.55) 70%,
+                rgba(218,182,114,0.9) 90%,
                 #dab672 100%
             );
             z-index: 5;
@@ -1167,12 +1163,9 @@
         [data-theme="dark"] .showroom-room::after {
             background: linear-gradient(to bottom,
                 transparent 0%,
-                rgba(28,28,40,0.05) 15%,
-                rgba(28,28,40,0.15) 30%,
-                rgba(28,28,40,0.35) 45%,
-                rgba(28,28,40,0.55) 58%,
-                rgba(28,28,40,0.75) 70%,
-                rgba(28,28,40,0.9) 82%,
+                rgba(28,28,40,0.15) 40%,
+                rgba(28,28,40,0.55) 70%,
+                rgba(28,28,40,0.9) 90%,
                 #1c1c28 95%,
                 #1c1c28 100%
             );
@@ -1350,9 +1343,9 @@
 
         .car-silhouette svg {
             width: 100%;
-            max-width: 845px;
+            max-width: 1100px;
             height: auto;
-            filter: drop-shadow(0 0 30px rgba(200,163,61,0.18));
+            filter: drop-shadow(0 0 40px rgba(200,163,61,0.25));
             animation: silhouettePulse 3s ease-in-out infinite;
             pointer-events: none;
         }
@@ -2305,25 +2298,25 @@
                 <div class="car-silhouette" id="carSilhouette" onclick="document.getElementById('fileInput').click()">
                     <svg viewBox="0 0 700 300" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <!-- Car body -->
-                        <path d="M60 220 L100 220 L110 200 L130 165 L180 120 L230 90 L280 75 L350 70 L420 70 L470 75 L510 90 L550 120 L580 165 L600 200 L610 220 L640 220" stroke="rgba(200,163,61,0.5)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                        <path d="M60 220 L100 220 L110 200 L130 165 L180 120 L230 90 L280 75 L350 70 L420 70 L470 75 L510 90 L550 120 L580 165 L600 200 L610 220 L640 220" stroke="rgba(200,163,61,0.85)" stroke-width="3" stroke-linecap="round" fill="none"/>
                         <!-- Roof line -->
-                        <path d="M200 100 L240 72 L380 68 L440 72 L490 100" stroke="rgba(200,163,61,0.3)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+                        <path d="M200 100 L240 72 L380 68 L440 72 L490 100" stroke="rgba(200,163,61,0.65)" stroke-width="2" stroke-linecap="round" fill="none"/>
                         <!-- Windows -->
-                        <path d="M225 95 L255 73 L375 70 L420 73 L465 95" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="rgba(200,163,61,0.04)"/>
+                        <path d="M225 95 L255 73 L375 70 L420 73 L465 95" stroke="rgba(200,163,61,0.5)" stroke-width="1.5" fill="rgba(200,163,61,0.08)"/>
                         <!-- Front wheel -->
-                        <circle cx="175" cy="225" r="38" stroke="rgba(200,163,61,0.4)" stroke-width="2.5" fill="none"/>
-                        <circle cx="175" cy="225" r="24" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="none"/>
-                        <circle cx="175" cy="225" r="6" fill="rgba(200,163,61,0.15)"/>
+                        <circle cx="175" cy="225" r="38" stroke="rgba(200,163,61,0.8)" stroke-width="3" fill="none"/>
+                        <circle cx="175" cy="225" r="24" stroke="rgba(200,163,61,0.5)" stroke-width="1.5" fill="none"/>
+                        <circle cx="175" cy="225" r="6" fill="rgba(200,163,61,0.4)"/>
                         <!-- Rear wheel -->
-                        <circle cx="535" cy="225" r="38" stroke="rgba(200,163,61,0.4)" stroke-width="2.5" fill="none"/>
-                        <circle cx="535" cy="225" r="24" stroke="rgba(200,163,61,0.2)" stroke-width="1" fill="none"/>
-                        <circle cx="535" cy="225" r="6" fill="rgba(200,163,61,0.15)"/>
+                        <circle cx="535" cy="225" r="38" stroke="rgba(200,163,61,0.8)" stroke-width="3" fill="none"/>
+                        <circle cx="535" cy="225" r="24" stroke="rgba(200,163,61,0.5)" stroke-width="1.5" fill="none"/>
+                        <circle cx="535" cy="225" r="6" fill="rgba(200,163,61,0.4)"/>
                         <!-- Ground line -->
-                        <line x1="40" y1="264" x2="660" y2="264" stroke="rgba(200,163,61,0.15)" stroke-width="1"/>
+                        <line x1="40" y1="264" x2="660" y2="264" stroke="rgba(200,163,61,0.4)" stroke-width="1.5"/>
                         <!-- Headlight -->
-                        <ellipse cx="115" cy="195" rx="12" ry="8" stroke="rgba(200,163,61,0.25)" stroke-width="1" fill="rgba(200,163,61,0.05)"/>
+                        <ellipse cx="115" cy="195" rx="12" ry="8" stroke="rgba(200,163,61,0.55)" stroke-width="1.5" fill="rgba(200,163,61,0.12)"/>
                         <!-- Taillight -->
-                        <ellipse cx="605" cy="195" rx="10" ry="8" stroke="rgba(200,163,61,0.25)" stroke-width="1" fill="rgba(200,163,61,0.05)"/>
+                        <ellipse cx="605" cy="195" rx="10" ry="8" stroke="rgba(200,163,61,0.55)" stroke-width="1.5" fill="rgba(200,163,61,0.12)"/>
                     </svg>
                     <div class="silhouette-label" id="uploadZone">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
