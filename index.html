@@ -2261,9 +2261,9 @@
 
         <!-- Action bar -->
         <div class="config-actions reveal" id="configActions" style="display:none;">
-            <button class="btn btn-ghost" onclick="addWheelOverlay()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add another wheel
+            <button class="btn btn-ghost" onclick="document.getElementById('customWheelInput').click()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload your wheel
             </button>
             <button class="btn btn-ghost" onclick="openSharePopup()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -2831,44 +2831,54 @@
         });
 
         async function loadCustomWheel(file) {
-            // Show immediate preview with raw image while bg-removal runs
             const reader = new FileReader();
             reader.onload = async (ev) => {
                 const rawDataUrl = ev.target.result;
 
-                // Show preview
+                // Show compact preview thumbnail in the corner immediately
                 const preview = document.getElementById('customWheelPreview');
                 const img = document.getElementById('customWheelImg');
                 img.src = rawDataUrl;
                 preview.style.display = 'flex';
 
-                // Show processing state
                 const label = preview.querySelector('.custom-wheel-label');
                 const tryBtn = preview.querySelector('.custom-wheel-try');
-                label.textContent = 'Removing background...';
-                tryBtn.disabled = true;
-                tryBtn.style.opacity = '0.5';
+                label.textContent = 'Preparing your wheel...';
+                if (tryBtn) tryBtn.style.display = 'none';  // hide button — we auto-try
 
-                // Send to backend for background removal
+                // Check if car is uploaded first — if not, ask user
+                if (!lastUploadedPhoto) {
+                    label.textContent = 'Upload a car photo first';
+                    if (tryBtn) tryBtn.style.display = '';
+                    return;
+                }
+
+                // Remove background via fal.ai BiRefNet
+                let finalUrl = rawDataUrl;
                 try {
                     const cleanedDataUrl = await removeWheelBackground(rawDataUrl);
                     if (cleanedDataUrl) {
-                        customWheelDataUrl = cleanedDataUrl;
+                        finalUrl = cleanedDataUrl;
                         img.src = cleanedDataUrl;
-                        label.textContent = 'Your custom wheel ✓';
-                    } else {
-                        // Fallback — use raw
-                        customWheelDataUrl = rawDataUrl;
-                        label.textContent = 'Your custom wheel';
                     }
                 } catch (err) {
                     console.warn('BG removal failed, using raw:', err);
-                    customWheelDataUrl = rawDataUrl;
-                    label.textContent = 'Your custom wheel';
                 }
 
-                tryBtn.disabled = false;
-                tryBtn.style.opacity = '1';
+                customWheelDataUrl = finalUrl;
+                label.textContent = 'Applying to your car...';
+
+                // Auto-trigger AI try-on — same flow as picking wheel from shelf
+                runAIInpaintingCustom(customWheelDataUrl);
+
+                // After AI done, show "Try again" button in preview
+                setTimeout(() => {
+                    label.textContent = 'Your custom wheel ✓';
+                    if (tryBtn) {
+                        tryBtn.style.display = '';
+                        tryBtn.textContent = 'Try again';
+                    }
+                }, 1000);
             };
             reader.readAsDataURL(file);
         }
