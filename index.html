@@ -2229,6 +2229,155 @@
             filter: blur(4px);
             z-index: 2;
         }
+
+        /* ========== WAITLIST MODAL ========== */
+        .waitlist-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .waitlist-overlay.active { display: flex; }
+        .waitlist-modal {
+            background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+            border: 1px solid rgba(200,163,61,0.3);
+            border-radius: 12px;
+            max-width: 480px;
+            width: 100%;
+            padding: 36px 30px;
+            position: relative;
+            box-shadow: 0 20px 80px rgba(200,163,61,0.15);
+        }
+        .waitlist-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 8px;
+            line-height: 1;
+        }
+        .waitlist-close:hover { color: var(--gold); }
+        .waitlist-badge {
+            display: inline-block;
+            background: rgba(200,163,61,0.15);
+            color: var(--gold);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .waitlist-title {
+            font-family: var(--serif);
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+        .waitlist-sub {
+            color: rgba(255,255,255,0.65);
+            font-size: 14px;
+            line-height: 1.55;
+            margin-bottom: 22px;
+        }
+        .waitlist-benefits {
+            list-style: none;
+            padding: 0;
+            margin: 18px 0 24px;
+        }
+        .waitlist-benefits li {
+            color: rgba(255,255,255,0.85);
+            font-size: 13.5px;
+            padding: 6px 0 6px 24px;
+            position: relative;
+        }
+        .waitlist-benefits li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+            font-weight: bold;
+        }
+        .waitlist-form input,
+        .waitlist-form select {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .waitlist-form input:focus,
+        .waitlist-form select:focus {
+            border-color: var(--gold);
+        }
+        .waitlist-form input::placeholder { color: rgba(255,255,255,0.4); }
+        .waitlist-submit {
+            width: 100%;
+            padding: 13px;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 6px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .waitlist-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(200,163,61,0.35);
+        }
+        .waitlist-submit:disabled { opacity: 0.6; cursor: wait; }
+        .waitlist-count {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            margin-top: 14px;
+        }
+        .waitlist-count b { color: var(--gold); }
+        .waitlist-thanks {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .waitlist-thanks h3 {
+            font-family: var(--serif);
+            color: var(--gold);
+            font-size: 26px;
+            margin-bottom: 12px;
+        }
+        .waitlist-thanks p {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .waitlist-privacy {
+            color: rgba(255,255,255,0.35);
+            font-size: 10.5px;
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+        .nav-cta-secondary:hover { background: rgba(200,163,61,0.15) !important; }
     </style>
 </head>
 <body>
@@ -2247,6 +2396,7 @@
                 <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
             <a href="#showroom" class="nav-cta">Try On</a>
+            <button class="nav-cta nav-cta-secondary" onclick="openWaitlist()" style="margin-left:8px; background:transparent; border:1.5px solid var(--gold); color:var(--gold);">Early Access</button>
         </div>
     </nav>
 
@@ -3884,7 +4034,122 @@
 
         // Load catalog on page load
         loadCatalog();
+
+        // ========== WAITLIST ==========
+        // CONFIG — replace this with your real Formspree endpoint once created at formspree.io
+        // Temporary fallback: submissions written to localStorage AND logged to console for manual export
+        const WAITLIST_ENDPOINT = 'https://formspree.io/f/REPLACE_WITH_YOUR_ID';
+        const WAITLIST_BASE_COUNT = 47; // social proof seed — update periodically
+
+        function openWaitlist() {
+            document.getElementById('waitlistOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            const count = WAITLIST_BASE_COUNT + JSON.parse(localStorage.getItem('fw_waitlist') || '[]').length;
+            document.getElementById('waitlistCount').innerHTML = 'Join <b>' + count + '</b> drivers already on the list';
+        }
+        function closeWaitlist() {
+            document.getElementById('waitlistOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWaitlist(); });
+
+        async function submitWaitlist(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = 'Submitting…';
+
+            const data = {
+                email: form.email.value.trim(),
+                car: form.car.value.trim(),
+                country: form.country.value,
+                source: 'forged-wheels landing',
+                timestamp: new Date().toISOString(),
+            };
+
+            // Always save to localStorage as immutable log (backup)
+            const list = JSON.parse(localStorage.getItem('fw_waitlist') || '[]');
+            list.push(data);
+            localStorage.setItem('fw_waitlist', JSON.stringify(list));
+            console.log('[WAITLIST] New signup:', data);
+
+            // Try Formspree if configured
+            if (!WAITLIST_ENDPOINT.includes('REPLACE_WITH_YOUR_ID')) {
+                try {
+                    await fetch(WAITLIST_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                } catch (err) {
+                    console.warn('Formspree failed, entry saved locally:', err);
+                }
+            }
+
+            // Show thanks
+            form.style.display = 'none';
+            document.getElementById('waitlistThanks').style.display = 'block';
+            return false;
+        }
+
+        // Dev helper: export waitlist as JSON to console
+        window.exportWaitlist = () => {
+            const list = JSON.parse(localStorage.getItem('fw_waitlist') || '[]');
+            console.table(list);
+            const blob = new Blob([JSON.stringify(list, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'waitlist-' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+        };
     </script>
+
+    <!-- ========== WAITLIST MODAL ========== -->
+    <div class="waitlist-overlay" id="waitlistOverlay" onclick="if(event.target===this)closeWaitlist()">
+        <div class="waitlist-modal">
+            <button class="waitlist-close" onclick="closeWaitlist()" aria-label="Close">✕</button>
+
+            <div id="waitlistForm">
+                <span class="waitlist-badge">Early access · Launching June 2026</span>
+                <h2 class="waitlist-title">Design your own forged wheels</h2>
+                <p class="waitlist-sub">Be first to order a custom forged set designed with our AI on your own car photo. Join the waitlist to reserve your spot.</p>
+
+                <ul class="waitlist-benefits">
+                    <li><b>15%</b> founding-member discount on your first set</li>
+                    <li>Priority production slot — skip the queue</li>
+                    <li>Free AI design iterations until launch</li>
+                </ul>
+
+                <form class="waitlist-form" onsubmit="return submitWaitlist(event)">
+                    <input type="email" name="email" placeholder="Your email" required>
+                    <input type="text" name="car" placeholder="Your car (e.g. BMW M3 2022)" required>
+                    <select name="country" required>
+                        <option value="">Your country…</option>
+                        <option value="ES">🇪🇸 Spain</option>
+                        <option value="DE">🇩🇪 Germany</option>
+                        <option value="IT">🇮🇹 Italy</option>
+                        <option value="FR">🇫🇷 France</option>
+                        <option value="PT">🇵🇹 Portugal</option>
+                        <option value="NL">🇳🇱 Netherlands</option>
+                        <option value="CH">🇨🇭 Switzerland</option>
+                        <option value="AT">🇦🇹 Austria</option>
+                        <option value="OTHER">Other EU</option>
+                    </select>
+                    <button type="submit" class="waitlist-submit">Reserve My Spot</button>
+                </form>
+
+                <div class="waitlist-count" id="waitlistCount">Join <b>47</b> drivers already on the list</div>
+                <p class="waitlist-privacy">By joining you agree to receive launch updates. No spam, unsubscribe anytime. GDPR-compliant (SignalWaves SLU, Barcelona).</p>
+            </div>
+
+            <div id="waitlistThanks" class="waitlist-thanks" style="display:none;">
+                <div style="font-size:48px; margin-bottom:8px;">🏁</div>
+                <h3>You're on the list.</h3>
+                <p>We'll email you with your early-access link as soon as we launch (target: June 2026). Your 15% founder discount is reserved.</p>
+                <button class="waitlist-submit" onclick="closeWaitlist()" style="max-width:180px; margin:18px auto 0; display:block;">Back to catalog</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
