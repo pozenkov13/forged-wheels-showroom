@@ -7,12 +7,12 @@
 **Fundador:** Andrei Potcenkovskii
 **Contacto:** pozenkov13@gmail.com · +34 628 106 939
 **Versión:** v2 — 19 de abril de 2026
-**Destinatario:** ENISA — Línea Jóvenes Emprendedores / Emprendedoras
+**Destinatario:** ENISA — Línea Emprendedores
 
 **Cambios v2 respecto a v1** (tras review del evaluador Miguel Alonso Serra):
 - Cifras de EBITDA, beneficio neto y uso de fondos sincronizadas al céntimo con el modelo financiero Excel v2
 - Incorporación de Impuesto sobre Sociedades (15% Y1-Y2, 25% desde Y3), IVA trimestral, Seguridad Social empresa y RC Producto
-- Cuota ENISA recalculada con fórmula correcta (TIN 4,25% fijo + tipo variable, carencia 12 meses, 72 meses amortización)
+- Cuota ENISA recalculada (Línea Emprendedores: TIN 4,75% fijo + tipo variable, carencia 24 meses, 72 meses amortización)
 - Análisis de sensibilidad con tres escenarios (Pesimista / Base / Optimista)
 - Sección nueva de Unit Economics con LTV / CAC
 - Reducción del peso del salario fundador en el uso del préstamo ENISA del 40% al 27%
@@ -31,7 +31,7 @@ El producto central es un motor de **visualización fotorrealista mediante IA (G
 
 **Estado actual (abril 2026):** MVP plenamente funcional y en producción, 21 diseños de referencia en catálogo, motor de IA operativo, empresa constituida, infraestructura técnica desplegada (Vercel, fal.ai, API propia), red de 13 fabricantes investigados, 5 RFQs enviadas a proveedores certificados.
 
-**Necesidad de financiación:** **75.000 €** a través de la Línea Jóvenes Emprendedores de ENISA, complementados con un aporte propio de 8.000 € del fundador.
+**Necesidad de financiación:** **75.000 €** a través de la Línea Emprendedores de ENISA, complementados con un aporte propio de 8.000 € del fundador.
 
 ### Previsión financiera consolidada (modelo Excel v2)
 
@@ -43,11 +43,11 @@ El producto central es un motor de **visualización fotorrealista mediante IA (G
 | **EBITDA** | **−39.213 €** | **+532.628 €** | **+2.211.034 €** |
 | Amortización | 3.978 € | 5.304 € | 5.304 € |
 | EBIT | −43.191 € | +527.324 € | +2.205.730 € |
-| Intereses ENISA | 3.192 € | 14.184 € | 14.184 € |
-| Resultado antes impuestos | −46.383 € | +513.140 € | +2.191.546 € |
-| Impuesto Sociedades (15%/25%) | 0 € | 76.971 € | 547.887 € |
-| **Beneficio neto** | **−46.383 €** | **+436.168 €** | **+1.643.658 €** |
-| Caja al final de año | 52.233 € | 452.282 € | 1.775.677 € |
+| Intereses ENISA (TIN 4,75%) | 3.564 € | 3.564 € | 14.388 € |
+| Resultado antes impuestos | −46.755 € | +523.760 € | +2.191.342 € |
+| Impuesto Sociedades (15%/25%) | 0 € | 78.564 € | 547.836 € |
+| **Beneficio neto** | **−46.755 €** | **+445.196 €** | **+1.643.506 €** |
+| Caja al final de año | 51.861 € | 460.938 € | 1.784.181 € |
 
 Nota: el Año 1 cierra con EBITDA ligeramente negativo (−39 k€) por ser año de lanzamiento. **El EBITDA mensual se vuelve positivo en el mes 7** (diciembre 2026, +378 €); **el EBITDA acumulado alcanza el equilibrio en el mes 13** (junio 2027). La empresa no requiere financiación adicional a lo largo de los tres primeros años.
 
@@ -82,18 +82,19 @@ La actividad declarada en IAE (933.9 y 965.1) responde a proyectos anteriores de
 
 ### 2.3 Fundador — Andrei Potcenkovskii
 
-**Perfil:** emprendedor tecnológico con más de 10 años desarrollando productos digitales, especializado en la aplicación práctica de modelos de inteligencia artificial a problemas de comercio electrónico.
+**Perfil:** emprendedor con más de **25 años de trayectoria empresarial**, evolucionado desde la construcción residencial tradicional (20+ años como empresario autónomo en Rusia) hacia la fundación y operación de plataformas digitales basadas en inteligencia artificial. Licenciado en Economía por la Universidad de Petrozavodsk (Rusia, 1999) y Técnico Superior en Construcción de Maquinaria.
 
-**Proyectos previos relevantes:**
-- **SignalWaves Auto** — plataforma tecnológica en el sector automotriz.
-- **PsychAuto** (psihavto.tilda.ws) — test psicológico para selección de vehículo, operativo en mercados ruso, inglés y español.
-- Más de 10 años desarrollando plataformas web y móviles en diferentes verticales.
+**Proyectos actuales y previos relevantes:**
+- **SignalWaves Auto** (2024-presente, Barcelona) — importación y venta de vehículos premium de Alemania al mercado español, con garaje operativo propio.
+- **PsychAuto** (psihavto.tilda.ws, 2024-presente) — test psicológico para selección de vehículo, operativo en tres idiomas (ruso, inglés, español). ~1.000 tests completados en fase piloto, audiencia principal UE.
+- **Construcción residencial** (2000-2020, Rusia) — más de 20 años como empresario autónomo construyendo viviendas unifamiliares y realizando reformas integrales.
 
 **Competencias aportadas a Forged Wheels:**
-- Ingeniería de software full-stack (frontend, backend, integración APIs de IA).
+- Ingeniería full-stack aplicada (frontend, backend, integración APIs de IA).
 - Conocimiento directo de modelos generativos de última generación (Gemini 3 Pro, Nano Banana Pro, Florence-2, BiRefNet).
-- Experiencia en lanzamiento y crecimiento de plataformas digitales multi-idioma.
-- Residencia legal en España (Barcelona) con permiso de residencia No Lucrativa, en trámite de modificación a permiso de Emprendedor (Startup Visa) tras resolución ENISA.
+- Experiencia práctica de gestión de proyectos con proveedores internacionales y control presupuestario (de obras residenciales a cadena de suministro Asia-EU).
+- Residencia legal en España desde 2024 con autorización No Lucrativa; en trámite de modificación a autorización de Emprendedor (Ley 14/2013) tras resolución ENISA.
+- Idiomas: ruso nativo, inglés B1, español A1 (en mejora activa).
 
 **Dedicación:** 100 % al proyecto Forged Wheels.
 
@@ -367,28 +368,28 @@ Los ratios LTV/CAC de 3,5x (Y1) y 6,8x (Y3) superan holgadamente el benchmark de
 | **EBITDA** | **−39.213** | **+532.628** | **+2.211.034** |
 | Amortización activos (5 años) | 3.978 | 5.304 | 5.304 |
 | **EBIT** | **−43.191** | **+527.324** | **+2.205.730** |
-| Intereses ENISA (TIN 4,25 %) | 3.192 | 14.184 | 14.184 |
-| **Resultado antes impuestos** | **−46.383** | **+513.140** | **+2.191.546** |
-| Impuesto Sociedades (15 % / 25 %) | 0 | 76.971 | 547.887 |
-| **Beneficio neto** | **−46.383** | **+436.168** | **+1.643.658** |
-| % Margen neto | −21,5 % | 25,1 % | 30,5 % |
+| Intereses ENISA (TIN 4,75 %) | 3.564 | 3.564 | 14.388 |
+| **Resultado antes impuestos** | **−46.755** | **+523.760** | **+2.191.342** |
+| Impuesto Sociedades (15 % / 25 %) | 0 | 78.564 | 547.836 |
+| **Beneficio neto** | **−46.755** | **+445.196** | **+1.643.506** |
+| % Margen neto | −21,6 % | 25,6 % | 30,5 % |
 
 ### 10.2 Flujo de caja y tesorería
 
 | Concepto (€) | Año 1 | Año 2 | Año 3 |
 |---|---|---|---|
-| Caja inicial | 8.000 | 52.233 | 452.282 |
+| Caja inicial | 8.000 | 51.861 | 460.938 |
 | (+) Desembolso ENISA | 75.000 | 0 | 0 |
 | (+) Cash in operativo | 216.000 | 1.739.600 | 5.397.600 |
-| (−) Cash out operativo | −243.891 | −1.211.700 | −3.233.933 |
-| (−) Impuesto Sociedades | 0 | −76.971 | −547.886 |
+| (−) Cash out operativo | −243.575 | −1.252.359 | −3.227.510 |
+| (−) Impuesto Sociedades | 0 | −78.564 | −547.836 |
 | (−) IVA neto liquidado | 0 | 0 | 0 |
-| (−) Cuota ENISA | −3.825 | −14.175 | −14.175 |
-| **Caja al final del año** | **52.233** | **452.282** | **1.775.677** |
+| (−) Cuota ENISA | −3.564 | 0 (carencia) | −13.176 |
+| **Caja al final del año** | **51.861** | **460.938** | **1.784.181** |
 
 La caja mínima a lo largo del Año 1 se registra en M3 (45.885 €), con holgura suficiente frente a la inversión inicial. Tras el mes 13 la generación de caja se acelera hasta alcanzar 1,78 M€ al cierre del Año 3 sin necesidad de financiación adicional.
 
-*Nota técnica sobre la cuota ENISA del Año 1:* durante el período de carencia de capital (meses 1-12) se abonan exclusivamente intereses al tipo fijo del 4,25 % TIN, por lo que la cuota mensual efectiva es de 266 €/mes (total Y1: 3.192 €). El importe de 3.825 € que podría figurar en cálculos alternativos corresponde a una amortización lineal teórica del primer año; el valor real devengado conforme al cuadro francés con carencia es el utilizado en el modelo (diferencia de 633 € que no afecta al resultado neto del ejercicio).
+*Nota técnica sobre la cuota ENISA durante Y1 y Y2:* durante el período de carencia de capital de 24 meses (meses 1-24) se abonan exclusivamente intereses al tipo fijo del 4,75 % TIN, por lo que la cuota mensual efectiva es de 297 €/mes (total Y1 y Y2: 3.564 € cada ejercicio). La amortización de capital comienza en el mes 25, con cuota mensual constante de 1.199 € (fórmula francesa sobre 72 meses restantes). Este esquema de carencia extendida, propio de la Línea Emprendedores de ENISA, libera presión de tesorería en los dos años críticos de lanzamiento comercial.
 
 ### 10.3 Uso detallado de los 75.000 € de ENISA
 
@@ -412,13 +413,13 @@ Se complementa con **8.000 € de aporte propio** del fundador (ya desembolsados
 | Condición | Valor |
 |---|---|
 | Importe solicitado | 75.000 € |
-| Línea | Jóvenes Emprendedores / Emprendedoras 2026 |
-| TIN fijo | 4,25 % |
+| Línea | **Emprendedores** (sin límite de edad) |
+| TIN fijo | 4,75 % |
 | Tipo variable complementario | según EBITDA (Euribor + spread) |
-| Carencia de capital | 12 meses |
-| Plazo total | 84 meses (7 años) |
-| Cuota mensual post-carencia | 1.182 €/mes (fórmula francesa) |
-| Cuota durante carencia | 266 €/mes (solo interés fijo) |
+| **Carencia de capital** | **24 meses** (Años 1 y 2 solo intereses) |
+| Plazo total | 96 meses (8 años) |
+| Cuota mensual post-carencia | 1.199 €/mes (fórmula francesa sobre 72 meses) |
+| Cuota durante carencia | 297 €/mes (solo interés fijo) |
 | Comisión de apertura | 0,5 % sobre dispuesto |
 
 ### 10.5 Impuestos contemplados en el modelo
@@ -434,9 +435,9 @@ Se complementa con **8.000 € de aporte propio** del fundador (ya desembolsados
 
 | Escenario | Ingresos Y1 | Ingresos Y3 | EBITDA Y1 | EBITDA Y3 | Break-even EBITDA+ | Caja mínima |
 |---|---|---|---|---|---|---|
-| **Pesimista** (−25 % ventas, +30 % CAC, +15 días retraso) | 162.000 € | 4.048.200 € | −62.217 € | +1.541.726 € | M13 | 17.591 € |
-| **Base** (modelo actual) | 216.000 € | 5.397.600 € | −39.213 € | +2.211.034 € | M8 | 33.082 € |
-| **Optimista** (+20 % ventas, −10 % CAC, EU warehouse) | 259.200 € | 6.477.120 € | −10.411 € | +2.987.591 € | M6 | 40.093 € |
+| **Pesimista** (−25 % ventas, +30 % CAC, +15 días retraso) | 162.000 € | 4.048.200 € | −62.217 € | +1.541.726 € | M13 | 17.219 € |
+| **Base** (modelo actual) | 216.000 € | 5.397.600 € | −39.213 € | +2.211.034 € | M8 | 32.865 € |
+| **Optimista** (+20 % ventas, −10 % CAC, EU warehouse) | 259.200 € | 6.477.120 € | −10.411 € | +2.987.591 € | M6 | 39.938 € |
 
 **Conclusiones:**
 

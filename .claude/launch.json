@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "showroom",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/andrejpoc/forged-wheels-showroom", "-l", "3456"],
+      "port": 3456
+    }
+  ]
+}

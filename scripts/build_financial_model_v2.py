@@ -103,18 +103,18 @@ ebit   = [ebitda[i] - amort[i] for i in range(36)]
 
 # Intereses ENISA (carencia 12m solo capital, pero intereses se pagan desde M1)
 # Tipo: ENISA Jóvenes 2025-26 = fijo 4.25% + variable (simplificamos a 4.25% en base, 6% pesimista)
-tin = 0.0425
+tin = 0.0475  # Línea Emprendedores
 interes_mensual = [75000*tin/12 for _ in range(36)]  # durante carencia solo interés
-# Cuota post-carencia: amortización + interés sobre saldo
 saldo = 75000
 cuota_enisa = [0]*36
-for i in range(12):
-    cuota_enisa[i] = round(interes_mensual[i])   # solo intereses
-# Post-carencia: cuota constante francesa 72 meses
+# Carencia 24 meses → solo intereses en Y1 y Y2
+for i in range(24):
+    cuota_enisa[i] = round(interes_mensual[i])
+# Post-carencia: cuota constante francesa 72 meses restantes (total plazo 96)
 n_pay = 72
 i_m = tin/12
 pmt = saldo * i_m / (1 - (1+i_m)**-n_pay)
-for i in range(12, 36):
+for i in range(24, 36):
     cuota_enisa[i] = round(pmt)
 
 ebt = [ebit[i] - cuota_enisa[i] for i in range(36)]  # Earnings before tax
@@ -450,9 +450,9 @@ params = [
     ("", "", ""),
     ("FINANCIACIÓN", "", ""),
     ("Préstamo ENISA", 75000, ""),
-    ("TIN ENISA (%)", "4.25%", "corregido tras Miguel"),
-    ("Carencia capital", 12, "meses"),
-    ("Plazo amortización", 72, "meses post-carencia"),
+    ("TIN ENISA (%)", "4.75%", "Línea Emprendedores"),
+    ("Carencia capital", 24, "meses"),
+    ("Plazo amortización", 72, "meses post-carencia (total 96)"),
     ("Cuota ENISA mensual post-carencia", round(pmt), "calculada real"),
     ("", "", ""),
     ("IMPUESTOS", "", ""),

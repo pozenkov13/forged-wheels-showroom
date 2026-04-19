@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Wheel Demo — Forged</title>
+    <style>
+        body { margin: 0; background: #080808; overflow: hidden; font-family: system-ui; }
+        #info {
+            position: fixed; top: 20px; left: 20px; color: #b8942e;
+            font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
+            z-index: 10;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="info">Forged · 3D Demo · вращай мышкой</div>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // Lights (dramatic premium lighting)
+        const ambient = new THREE.AmbientLight(0x404040, 0.3);
+        scene.add(ambient);
+
+        const keyLight = new THREE.SpotLight(0xffd875, 3, 20, Math.PI / 6, 0.5);
+        keyLight.position.set(5, 3, 5);
+        scene.add(keyLight);
+
+        const rimLight = new THREE.SpotLight(0xb8942e, 2, 20, Math.PI / 4, 0.3);
+        rimLight.position.set(-5, -2, -3);
+        scene.add(rimLight);
+
+        // Wheel geometry (simplified 5-spoke wheel)
+        const wheelGroup = new THREE.Group();
+
+        // Gold material
+        const goldMaterial = new THREE.MeshStandardMaterial({
+            color: 0xb8942e,
+            metalness: 0.9,
+            roughness: 0.2,
+        });
+
+        // Outer rim
+        const rimGeometry = new THREE.TorusGeometry(2, 0.15, 16, 64);
+        const rim = new THREE.Mesh(rimGeometry, goldMaterial);
+        wheelGroup.add(rim);
+
+        // Inner ring
+        const innerRing = new THREE.Mesh(
+            new THREE.TorusGeometry(1.85, 0.05, 16, 64),
+            new THREE.MeshStandardMaterial({ color: 0xd4b44a, metalness: 1, roughness: 0.15 })
+        );
+        wheelGroup.add(innerRing);
+
+        // Center hub
+        const hubGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 32);
+        const hub = new THREE.Mesh(hubGeometry, goldMaterial);
+        hub.rotation.x = Math.PI / 2;
+        wheelGroup.add(hub);
+
+        // Center cap
+        const capGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.35, 32);
+        const cap = new THREE.Mesh(capGeometry, new THREE.MeshStandardMaterial({
+            color: 0x0a0a0a, metalness: 0.8, roughness: 0.3
+        }));
+        cap.rotation.x = Math.PI / 2;
+        cap.position.z = 0.05;
+        wheelGroup.add(cap);
+
+        // 5 spokes
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const spokeGeometry = new THREE.BoxGeometry(0.15, 1.4, 0.2);
+            const spoke = new THREE.Mesh(spokeGeometry, goldMaterial);
+            spoke.position.set(Math.cos(angle + Math.PI/2) * 0.9, Math.sin(angle + Math.PI/2) * 0.9, 0);
+            spoke.rotation.z = angle;
+            wheelGroup.add(spoke);
+        }
+
+        // Tilt wheel slightly for dramatic view
+        wheelGroup.rotation.x = -0.2;
+        scene.add(wheelGroup);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.8;
+        controls.minDistance = 3;
+        controls.maxDistance = 10;
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

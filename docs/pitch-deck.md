@@ -181,10 +181,11 @@ Análisis de sensibilidad: la caja mínima se mantiene positiva incluso en escen
 
 **Fundador — Andrei Potcenkovskii**
 
-- 10+ años desarrollando productos digitales.
-- Ingeniería full-stack + experiencia práctica en modelos generativos (Gemini, Nano Banana, Florence-2, BiRefNet).
-- Proyectos previos: **SignalWaves Auto**, **PsychAuto** (plataforma multi-idioma psihavto.tilda.ws).
-- Residencia legal en España, en proceso de modificación a Startup Visa post-ENISA.
+- **25+ años de trayectoria empresarial** (construcción residencial en Rusia 2000-2020 → plataformas digitales con IA desde 2024).
+- Licenciado en Economía · Técnico Superior en Construcción de Maquinaria.
+- Ingeniería full-stack + experiencia práctica en modelos generativos (Gemini 3 Pro, Nano Banana, Florence-2, BiRefNet).
+- Proyectos activos en paralelo: **SignalWaves Auto** (importación de vehículos DE→ES con garaje en Barcelona), **PsychAuto** (psihavto.tilda.ws, 3 idiomas, ~1.000 tests completados).
+- Residencia legal en España desde 2024, en proceso de modificación a autorización de Emprendedor (Ley 14/2013) tras resolución ENISA.
 
 **Advisory Board** — en formación (3 perfiles objetivo):
 
@@ -198,7 +199,7 @@ Análisis de sensibilidad: la caja mínima se mantiene positiva incluso en escen
 
 ## Slide 11 — Solicitud ENISA — 75.000 €
 
-**Línea Jóvenes Emprendedores · TIN 4,25 % · carencia 12 m · plazo 84 m.**
+**Línea Emprendedores · TIN 4,75 % · carencia 24 m · plazo 96 m.**
 
 ### Uso de fondos
 

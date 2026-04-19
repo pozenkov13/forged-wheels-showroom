@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FORGED — Кованые диски на заказ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            /* PALETTE AB — Honey Limestone (A3 × B hybrid) */
+            --gold: #bf9250;              /* honey gold (between natural and amber) */
+            --gold-light: #d4a767;        /* warm honey glow */
+            --gold-glow: rgba(191,146,80,0.30);
+            --accent: #5c6b56;            /* muted olive-sage */
+            --dark: #1e1813;              /* warm dark brown (button text) */
+            --dark-2: #d5c294;            /* honey cream variant */
+            --dark-card: #dbc89a;         /* card surface (honey limestone) */
+            --dark-border: #b29a6e;       /* warm honey border */
+            --text: #211913;              /* warm charcoal text */
+            --text-muted: #675a44;        /* muted warm taupe */
+            --warm-bg: linear-gradient(160deg, #e0cd9e 0%, #d6c08c 50%, #dbc693 100%);
+            --floor-gradient: linear-gradient(180deg, transparent 0%, rgba(75,60,36,0.09) 70%, rgba(191,146,80,0.14) 100%);
+            --serif: 'Playfair Display', Georgia, serif;
+            --sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--warm-bg);
+            background-attachment: fixed;
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 0 48px;
+            height: 72px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(224,205,158,0.78);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: background 0.4s;
+        }
+
+        nav.scrolled {
+            background: rgba(214,192,140,0.95);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .logo {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--gold);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-cta {
+            padding: 10px 24px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--dark);
+            background: var(--gold);
+            transition: all 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--gold-light);
+            box-shadow: 0 4px 20px var(--gold-glow);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            height: 100vh;
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 75% 50%, rgba(224,192,90,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 15% 85%, rgba(200,163,61,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 40% at 70% 95%, rgba(244,201,108,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 50% 0%, rgba(180,130,50,0.05) 0%, transparent 60%);
+        }
+
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(200,180,140,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200,180,140,0.025) 1px, transparent 1px);
+            background-size: 80px 80px;
+            mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 20%, transparent 70%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 0 48px;
+            max-width: 720px;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 32px;
+            position: relative;
+            padding-left: 48px;
+        }
+
+        .hero-tag::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 32px;
+            height: 1px;
+            background: var(--gold);
+        }
+
+        .hero h1 {
+            font-family: var(--serif);
+            font-size: clamp(42px, 5.5vw, 68px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            color: #211913;
+            margin-bottom: 28px;
+        }
+
+        .hero h1 em {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .hero-desc {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-muted);
+            max-width: 480px;
+            margin-bottom: 48px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: var(--dark);
+        }
+
+        .btn-gold:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--gold-glow);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--dark-border);
+        }
+
+        .btn-ghost:hover {
+            border-color: rgba(255,255,255,0.2);
+            color: #211913;
+        }
+
+        /* Hero wheel visual */
+        .hero-visual {
+            position: absolute;
+            right: -5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 55vw;
+            max-width: 720px;
+            aspect-ratio: 1;
+            z-index: 1;
+        }
+
+        /* "Пол" магазина — тень от диска */
+        .hero-visual::before {
+            content: '';
+            position: absolute;
+            bottom: 6%;
+            left: 12%;
+            right: 12%;
+            height: 50px;
+            background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(58,42,24,0.32) 0%, rgba(58,42,24,0.12) 30%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(8px);
+            animation: shadowBreathe 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        /* Подсветка подиума */
+        .hero-visual::after {
+            content: '';
+            position: absolute;
+            bottom: -5%;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(224,192,90,0.15) 0%, rgba(200,163,61,0.05) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: podiumGlow 8s ease-in-out infinite;
+        }
+
+        /* Контейнер вокруг диска для parallax */
+        .wheel-wrap {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            perspective: 1800px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Автоматическое вращение влево-вправо — как будто крутишь диск в руках */
+        .wheel-yaw {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: wheelYaw 14s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+        }
+
+        /* Настоящий поворот: влево → пауза → вправо → пауза → влево */
+        @keyframes wheelYaw {
+            0%   { transform: rotateY(-22deg); }
+            8%   { transform: rotateY(-22deg); }  /* держим взгляд влево */
+            42%  { transform: rotateY(22deg); }
+            58%  { transform: rotateY(22deg); }   /* держим взгляд вправо */
+            92%  { transform: rotateY(-22deg); }
+            100% { transform: rotateY(-22deg); }
+        }
+
+        .wheel-main {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter:
+                drop-shadow(0 0 140px rgba(224,192,90,0.38))
+                drop-shadow(0 0 70px rgba(200,163,61,0.28))
+                drop-shadow(0 40px 60px rgba(58,42,24,0.32))
+                drop-shadow(0 80px 40px rgba(58,42,24,0.12));
+            animation: wheelFloat 8s ease-in-out infinite, wheelBreath 5s ease-in-out infinite;
+            transform-origin: center 55%;
+            will-change: transform, filter;
+        }
+
+        /* Вращающийся свет вокруг диска — имитация движущегося прожектора */
+        .wheel-spotlight {
+            position: absolute;
+            inset: -15%;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(244,201,108,0.12) 60deg,
+                rgba(224,192,90,0.25) 90deg,
+                rgba(244,201,108,0.12) 120deg,
+                transparent 180deg,
+                transparent 360deg
+            );
+            animation: spotlightRotate 12s linear infinite;
+            opacity: 0.7;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(40px);
+        }
+
+        /* Блик-вспышка которая проходит по диску */
+        .wheel-shine {
+            position: absolute;
+            top: 10%;
+            left: -30%;
+            width: 40%;
+            height: 80%;
+            background: linear-gradient(
+                105deg,
+                transparent 0%,
+                transparent 40%,
+                rgba(255,235,180,0.15) 48%,
+                rgba(255,245,200,0.3) 50%,
+                rgba(255,235,180,0.15) 52%,
+                transparent 60%,
+                transparent 100%
+            );
+            transform: skewX(-15deg);
+            animation: shineSweep 5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: screen;
+            border-radius: 50%;
+        }
+
+        /* Едва заметное плавание — без дёрганий */
+        @keyframes wheelFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Дыхание диска (лёгкое "вдох-выдох") */
+        @keyframes wheelBreath {
+            0%, 100% { filter:
+                drop-shadow(0 0 140px rgba(224,192,90,0.38))
+                drop-shadow(0 0 70px rgba(200,163,61,0.28))
+                drop-shadow(0 40px 60px rgba(58,42,24,0.32))
+                drop-shadow(0 80px 40px rgba(58,42,24,0.12)); }
+            50% { filter:
+                drop-shadow(0 0 180px rgba(224,192,90,0.48))
+                drop-shadow(0 0 90px rgba(200,163,61,0.35))
+                drop-shadow(0 40px 60px rgba(58,42,24,0.32))
+                drop-shadow(0 80px 40px rgba(58,42,24,0.12)); }
+        }
+
+        /* Тень дышит синхронно */
+        @keyframes shadowBreathe {
+            0%, 100% { transform: scaleX(1) scaleY(1); opacity: 0.8; }
+            40% { transform: scaleX(0.88) scaleY(0.9); opacity: 0.55; }
+        }
+
+        /* Световой подиум пульсирует */
+        @keyframes podiumGlow {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Свет-прожектор вращается */
+        @keyframes spotlightRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Блик скользит по диску — раз в 5 секунд */
+        @keyframes shineSweep {
+            0%, 100% { left: -30%; opacity: 0; }
+            40% { opacity: 0; }
+            50% { opacity: 1; }
+            60% { opacity: 1; }
+            70% { opacity: 0; }
+            100% { left: 120%; opacity: 0; }
+        }
+
+        .wheel-glow {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle, rgba(200,163,61,0.2) 0%, rgba(200,163,61,0.05) 40%, transparent 65%);
+            opacity: 0.6;
+            animation: glowPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            padding: 48px;
+            border-top: 1px solid var(--dark-border);
+            border-bottom: 1px solid var(--dark-border);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        .stat:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: var(--dark-border);
+        }
+
+        .stat-number {
+            font-family: var(--serif);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* ===== SECTION COMMON ===== */
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-tag {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(28px, 3.5vw, 42px);
+            font-weight: 700;
+            color: #211913;
+            line-height: 1.2;
+        }
+
+        /* ===== CATALOG GRID ===== */
+        .catalog {
+            padding: 120px 48px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .wheel-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .wheel-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            group: true;
+        }
+
+        .wheel-card:hover {
+            border-color: rgba(200,163,61,0.4);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(58,42,24,0.18), 0 0 40px rgba(200,163,61,0.08);
+        }
+
+        .wheel-card-img {
+            aspect-ratio: 1;
+            background:
+                radial-gradient(ellipse 80% 40% at 50% 95%, rgba(224,192,90,0.08) 0%, transparent 60%),
+                radial-gradient(circle at 50% 45%, #2a2a38 0%, var(--dark-2) 75%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            perspective: 900px;
+        }
+
+        /* Автоматический свет-блик проходит по карточке */
+        .wheel-card-img .auto-shine {
+            position: absolute;
+            top: 0;
+            left: -40%;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(
+                105deg,
+                transparent 0%,
+                transparent 40%,
+                rgba(255,245,210,0.08) 48%,
+                rgba(255,250,220,0.18) 50%,
+                rgba(255,245,210,0.08) 52%,
+                transparent 60%,
+                transparent 100%
+            );
+            transform: skewX(-12deg);
+            animation: cardShineSweep 6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 3;
+            mix-blend-mode: screen;
+        }
+
+        .wheel-card:nth-child(2) .auto-shine { animation-delay: 1.5s; }
+        .wheel-card:nth-child(3) .auto-shine { animation-delay: 3s; }
+        .wheel-card:nth-child(4) .auto-shine { animation-delay: 0.7s; }
+        .wheel-card:nth-child(5) .auto-shine { animation-delay: 2.2s; }
+        .wheel-card:nth-child(6) .auto-shine { animation-delay: 4s; }
+
+        @keyframes cardShineSweep {
+            0%, 65%, 100% { left: -40%; opacity: 0; }
+            70% { opacity: 1; }
+            85% { opacity: 1; }
+            95% { left: 140%; opacity: 0; }
+        }
+
+        /* Световая дорожка снизу — как подсветка в витрине */
+        .wheel-card-img::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(224,192,90,0.5) 50%, transparent 100%);
+            opacity: 0.6;
+            transition: opacity 0.4s, transform 0.4s;
+            z-index: 2;
+        }
+
+        .wheel-card-img svg,
+        .wheel-card-img img {
+            width: 75%;
+            height: 75%;
+            object-fit: contain;
+            filter:
+                drop-shadow(0 0 40px rgba(224,192,90,0.15))
+                drop-shadow(0 25px 40px rgba(58,42,24,0.22));
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s;
+            z-index: 1;
+            animation: cardWheelYaw 16s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+            transform-style: preserve-3d;
+        }
+
+        /* Небольшие разные delay у карточек чтобы вращение не синхронное */
+        .wheel-card:nth-child(2) .wheel-card-img img { animation-delay: -2s; }
+        .wheel-card:nth-child(3) .wheel-card-img img { animation-delay: -4s; }
+        .wheel-card:nth-child(4) .wheel-card-img img { animation-delay: -6s; }
+        .wheel-card:nth-child(5) .wheel-card-img img { animation-delay: -8s; }
+        .wheel-card:nth-child(6) .wheel-card-img img { animation-delay: -10s; }
+
+        .wheel-card:hover .wheel-card-img svg,
+        .wheel-card:hover .wheel-card-img img {
+            animation-play-state: paused;
+            transform: rotate(-8deg) scale(1.1);
+            filter:
+                drop-shadow(0 0 60px rgba(224,192,90,0.3))
+                drop-shadow(0 30px 50px rgba(58,42,24,0.28));
+        }
+
+        @keyframes cardWheelYaw {
+            0%   { transform: rotateY(-18deg) scale(1); }
+            8%   { transform: rotateY(-18deg) scale(1); }
+            42%  { transform: rotateY(18deg) scale(1); }
+            58%  { transform: rotateY(18deg) scale(1); }
+            92%  { transform: rotateY(-18deg) scale(1); }
+            100% { transform: rotateY(-18deg) scale(1); }
+        }
+
+        .wheel-card:hover .wheel-card-img::before {
+            opacity: 1;
+            transform: scaleX(1.2);
+        }
+
+        .wheel-card-img::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 50%, rgba(90,72,42,0.14) 100%);
+            pointer-events: none;
+        }
+
+        .wheel-card-info {
+            padding: 24px;
+        }
+
+        .wheel-card-name {
+            font-family: var(--serif);
+            font-size: 18px;
+            font-weight: 700;
+            color: #211913;
+            margin-bottom: 6px;
+        }
+
+        .wheel-card-spec {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .wheel-card-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .price-note {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .card-arrow {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .card-arrow svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            transition: stroke 0.3s;
+        }
+
+        .wheel-card:hover .card-arrow {
+            border-color: var(--gold);
+            background: var(--gold);
+        }
+
+        .wheel-card:hover .card-arrow svg {
+            stroke: var(--dark);
+        }
+
+        /* ===== PROCESS ===== */
+        .process {
+            padding: 120px 48px;
+            background: var(--dark-2);
+        }
+
+        .process-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .process-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+        }
+
+        .step {
+            padding: 48px 32px;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .step:hover {
+            background: #22222c;
+            border-color: rgba(200,163,61,0.3);
+            box-shadow: 0 8px 30px rgba(200,163,61,0.06);
+        }
+
+        .step-num {
+            font-family: var(--serif);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--dark-border);
+            margin-bottom: 24px;
+            transition: color 0.3s;
+        }
+
+        .step:hover .step-num { color: var(--gold); }
+
+        .step h4 {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #211913;
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+
+        /* ===== UPLOAD / SHOWROOM ===== */
+        .showroom {
+            padding: 120px 48px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .upload-area {
+            border: 1px solid var(--dark-border);
+            background: var(--dark-card);
+            padding: 80px 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(135deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%),
+                linear-gradient(225deg, transparent 48%, rgba(200,163,61,0.04) 50%, transparent 52%);
+            background-size: 20px 20px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 60px rgba(200,163,61,0.12);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 32px;
+            border: 2px solid var(--dark-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover .upload-icon {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px var(--gold-glow);
+        }
+
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--gold);
+        }
+
+        .upload-title {
+            font-family: var(--serif);
+            font-size: 24px;
+            color: #211913;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .upload-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .upload-formats {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+        }
+
+        .format-badge {
+            padding: 6px 16px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border: 1px solid var(--dark-border);
+        }
+
+        /* ===== CONFIGURATOR ===== */
+        #configurator {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .wheel-picker {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .picker-title {
+            font-family: var(--serif);
+            font-size: 18px;
+            color: #211913;
+        }
+
+        .picker-reset {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-family: var(--sans);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--dark-border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .picker-reset:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .picker-wheels {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .picker-wheels::-webkit-scrollbar { height: 4px; }
+        .picker-wheels::-webkit-scrollbar-track { background: var(--dark); }
+        .picker-wheels::-webkit-scrollbar-thumb { background: var(--dark-border); border-radius: 2px; }
+
+        .picker-wheel-item {
+            flex-shrink: 0;
+            width: 90px;
+            height: 90px;
+            background: var(--dark);
+            border: 2px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .picker-wheel-item:hover,
+        .picker-wheel-item.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 16px var(--gold-glow);
+        }
+
+        .picker-wheel-item svg {
+            width: 60px;
+            height: 60px;
+        }
+
+        .picker-wheel-item .pw-name {
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .picker-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .size-control input[type="range"] {
+            width: 160px;
+            accent-color: var(--gold);
+            height: 4px;
+        }
+
+        .picker-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .canvas-area {
+            position: relative;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            margin-bottom: 16px;
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-area img#carPhoto {
+            max-width: 100%;
+            max-height: 600px;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .wheel-overlay {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            filter: drop-shadow(0 4px 12px rgba(58,42,24,0.28));
+            transition: filter 0.2s;
+        }
+
+        .wheel-overlay:active { cursor: grabbing; }
+
+        .wheel-overlay:hover {
+            filter: drop-shadow(0 4px 20px rgba(200,163,61,0.4));
+        }
+
+        .wheel-overlay svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .wheel-overlay .remove-wheel {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 20px;
+            height: 20px;
+            background: #e44;
+            color: #211913;
+            border: none;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .wheel-overlay:hover .remove-wheel { opacity: 1; }
+
+        .config-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            border-top: 1px solid var(--dark-border);
+            padding: 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer-brand {
+            font-family: var(--serif);
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover { color: var(--text); }
+
+        .footer-copy {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero-visual { display: none; }
+            .hero-content { max-width: 100%; }
+            .wheel-grid { grid-template-columns: repeat(2, 1fr); }
+            .process-steps { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 0 24px; }
+            .nav-links { display: none; }
+            .nav-cta { display: none; }
+            .hero-content { padding: 0 24px; }
+            .catalog { padding: 80px 24px; }
+            .wheel-grid { grid-template-columns: 1fr; }
+            .process { padding: 80px 24px; }
+            .process-steps { grid-template-columns: 1fr; }
+            .showroom { padding: 80px 24px; }
+            .upload-area { padding: 48px 24px; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .hero-actions { flex-direction: column; align-items: flex-start; }
+            footer { flex-direction: column; gap: 24px; text-align: center; }
+            .footer-links { flex-wrap: wrap; justify-content: center; }
+        }
+
+        /* ===== SCROLL ANIMATIONS ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <div class="logo">Forged</div>
+        <ul class="nav-links">
+            <li><a href="#catalog">Каталог</a></li>
+            <li><a href="#process">Как это работает</a></li>
+            <li><a href="#showroom">Примерка</a></li>
+        </ul>
+        <a href="#showroom" class="nav-cta">Примерить</a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+
+        <div class="hero-content">
+            <div class="hero-tag">Ручная работа · 30 дней</div>
+            <h1>Твоя машина.<br>Твои диски <em>через 30 дней</em>.</h1>
+            <p class="hero-desc">Поставь свои кованые диски на фото своей машины. Закажи по понятной цене. Забери через 30 дней.</p>
+            <div class="hero-actions">
+                <a href="#showroom" class="btn btn-gold">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Загрузить фото
+                </a>
+                <a href="#catalog" class="btn btn-ghost">Смотреть каталог</a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="wheel-glow"></div>
+            <div class="wheel-spotlight"></div>
+            <div class="wheel-wrap" id="wheelWrap">
+                <div class="wheel-yaw">
+                    <img class="wheel-main" src="generated/hero/02_hero_bronze_concave_nobg.png" alt="Forged luxury wheel" />
+                    <div class="wheel-shine"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat reveal">
+            <div class="stat-number">6061-T6</div>
+            <div class="stat-label">Авиационный алюминий</div>
+        </div>
+        <div class="stat reveal reveal-delay-1">
+            <div class="stat-number">1500+</div>
+            <div class="stat-label">Дизайнов в каталоге</div>
+        </div>
+        <div class="stat reveal reveal-delay-2">
+            <div class="stat-number">14-24"</div>
+            <div class="stat-label">Диаметры дисков</div>
+        </div>
+        <div class="stat reveal reveal-delay-3">
+            <div class="stat-number">21</div>
+            <div class="stat-label">День на изготовление</div>
+        </div>
+    </div>
+
+    <!-- CATALOG -->
+    <section class="catalog" id="catalog">
+        <div class="section-header reveal">
+            <div class="section-tag">Каталог</div>
+            <div class="section-title">Популярные модели</div>
+        </div>
+
+        <div class="wheel-grid">
+            <div class="wheel-card reveal" data-wheel="0">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w3.png" alt="HRE S101" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">HRE S101</div>
+                    <div class="wheel-card-spec">Составной / 3 части / Brushed Titanium</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €3,200</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wheel-card reveal reveal-delay-1" data-wheel="1">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w8.png" alt="Vossen CV3" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">Vossen CV3</div>
+                    <div class="wheel-card-spec">5 спиц / Моноблок / Matte Graphite</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €2,800</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wheel-card reveal reveal-delay-2" data-wheel="2">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w4.png" alt="ADV.1 Gold" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">ADV.1 Gold Mesh</div>
+                    <div class="wheel-card-spec">Multi-spoke / Моноблок / Brushed Gold</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €3,600</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wheel-card reveal" data-wheel="3">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w5.png" alt="Rotiform Classic" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">Classic Gold</div>
+                    <div class="wheel-card-spec">4 спицы / Составной / Gold + Chrome lip</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €3,400</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wheel-card reveal reveal-delay-1" data-wheel="4">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w7.png" alt="Vöxx Silver" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">Silver Multi</div>
+                    <div class="wheel-card-spec">12 спиц / Моноблок / Brushed Silver</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €2,400</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wheel-card reveal reveal-delay-2" data-wheel="5">
+                <div class="wheel-card-img">
+                    <img src="/wheels/w6.png" alt="Chrome Deep" loading="lazy">
+                </div>
+                <div class="wheel-card-info">
+                    <div class="wheel-card-name">Chrome Deep Concave</div>
+                    <div class="wheel-card-spec">5 спиц / Составной / Full Chrome</div>
+                    <div class="wheel-card-price">
+                        <div><span class="price">from €3,800</span> <span class="price-note">/ set</span></div>
+                        <div class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROCESS -->
+    <section class="process" id="process">
+        <div class="process-inner">
+            <div class="section-header reveal">
+                <div class="section-tag">Как это работает</div>
+                <div class="section-title">От фото до готовых дисков</div>
+            </div>
+
+            <div class="process-steps">
+                <div class="step reveal">
+                    <div class="step-num">01</div>
+                    <h4>Загрузите фото</h4>
+                    <p>Сфотографируйте ваш автомобиль сбоку. Мы примерим любые диски из каталога прямо на фото.</p>
+                </div>
+                <div class="step reveal reveal-delay-1">
+                    <div class="step-num">02</div>
+                    <h4>Выберите дизайн</h4>
+                    <p>Подберите из каталога или пришлите свой эскиз. Наш дизайнер создаст 3D-модель под ваш стиль.</p>
+                </div>
+                <div class="step reveal reveal-delay-2">
+                    <div class="step-num">03</div>
+                    <h4>Утвердите проект</h4>
+                    <p>Получите точную визуализацию с размерами, финишем покрытия и ценой. Внесите правки если нужно.</p>
+                </div>
+                <div class="step reveal reveal-delay-3">
+                    <div class="step-num">04</div>
+                    <h4>Получите диски</h4>
+                    <p>Изготовление 21 день. Ковка, обработка ЧПУ, покраска. Доставка по России с гарантией.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SHOWROOM / UPLOAD + CONFIGURATOR -->
+    <section class="showroom" id="showroom">
+        <div class="section-header reveal">
+            <div class="section-tag">Виртуальная примерка</div>
+            <div class="section-title">Увидьте результат до заказа</div>
+        </div>
+
+        <!-- Step 1: Upload -->
+        <div class="upload-area reveal" id="uploadZone">
+            <input type="file" id="fileInput" accept="image/*" style="display:none">
+            <div id="uploadPlaceholder">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <div class="upload-title">Загрузите фото вашего автомобиля</div>
+                <div class="upload-desc">Перетащите файл сюда или нажмите для выбора</div>
+                <div class="upload-formats">
+                    <span class="format-badge">JPG</span>
+                    <span class="format-badge">PNG</span>
+                    <span class="format-badge">HEIC</span>
+                    <span class="format-badge">до 20 MB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Configurator (hidden until photo uploaded) -->
+        <div id="configurator" style="display:none;">
+            <!-- Wheel picker panel -->
+            <div class="wheel-picker">
+                <div class="picker-header">
+                    <span class="picker-title">Выберите диск</span>
+                    <button class="picker-reset" onclick="resetUpload()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Другое фото
+                    </button>
+                </div>
+                <div class="picker-wheels" id="pickerWheels"></div>
+                <div class="picker-controls">
+                    <label class="size-control">
+                        <span>Размер</span>
+                        <input type="range" id="wheelSize" min="40" max="200" value="100">
+                    </label>
+                    <div class="picker-hint">Перетаскивайте диск на фото для позиционирования</div>
+                </div>
+            </div>
+
+            <!-- Canvas area with car photo + wheel overlays -->
+            <div class="canvas-area" id="canvasArea">
+                <img id="carPhoto" src="" alt="Ваш автомобиль">
+                <!-- Wheel overlays will be added dynamically -->
+            </div>
+
+            <!-- Action bar -->
+            <div class="config-actions">
+                <button class="btn btn-ghost" onclick="addWheelOverlay()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Добавить ещё диск
+                </button>
+                <button class="btn btn-gold" onclick="submitOrder()">
+                    Оформить заказ
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-brand">Forged</div>
+        <ul class="footer-links">
+            <li><a href="#catalog">Каталог</a></li>
+            <li><a href="#process">Процесс</a></li>
+            <li><a href="#showroom">Примерка</a></li>
+            <li><a href="#">Контакты</a></li>
+        </ul>
+        <div class="footer-copy">&copy; 2026 Forged</div>
+    </footer>
+
+    <script>
+        // Nav scroll effect
+        const nav = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 60);
+        });
+
+        // Добавить auto-shine блики в каждую карточку каталога
+        document.querySelectorAll('.wheel-card-img').forEach(el => {
+            const shine = document.createElement('div');
+            shine.className = 'auto-shine';
+            el.appendChild(shine);
+        });
+
+        // Mouse parallax для hero wheel — 3D tilt следит за курсором
+        const wheelWrap = document.getElementById('wheelWrap');
+        if (wheelWrap) {
+            let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+            window.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 2;
+                const y = (e.clientY / window.innerHeight - 0.5) * 2;
+                targetX = y * 8;  // tilt up/down max 8deg
+                targetY = -x * 10; // tilt left/right max 10deg
+            });
+            function animateWheel() {
+                currentX += (targetX - currentX) * 0.05;
+                currentY += (targetY - currentY) * 0.05;
+                wheelWrap.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
+                requestAnimationFrame(animateWheel);
+            }
+            animateWheel();
+        }
+
+        // Scroll reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // === WHEEL DESIGNS (real PNG images) ===
+        const wheelDesigns = [
+            { name: 'HRE S101', img: '/wheels/w3.png', price: '320 000' },
+            { name: 'Vossen CV3', img: '/wheels/w8.png', price: '280 000' },
+            { name: 'ADV.1 Gold', img: '/wheels/w4.png', price: '360 000' },
+            { name: 'Classic Gold', img: '/wheels/w5.png', price: '340 000' },
+            { name: 'Silver Multi', img: '/wheels/w7.png', price: '240 000' },
+            { name: 'Chrome Deep', img: '/wheels/w6.png', price: '380 000' },
+        ];
+
+        let selectedWheel = 0;
+        let wheelOverlayCount = 0;
+
+        // === UPLOAD ===
+        const zone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const placeholder = document.getElementById('uploadPlaceholder');
+        const configurator = document.getElementById('configurator');
+        const carPhoto = document.getElementById('carPhoto');
+        const canvasArea = document.getElementById('canvasArea');
+
+        zone.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) loadPhoto(file);
+        });
+
+        function loadPhoto(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                carPhoto.src = e.target.result;
+                zone.style.display = 'none';
+                configurator.style.display = 'block';
+                buildPicker();
+                // Auto-add first wheel overlay
+                setTimeout(() => addWheelOverlay(), 300);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload() {
+            fileInput.value = '';
+            zone.style.display = '';
+            configurator.style.display = 'none';
+            // Remove all overlays
+            document.querySelectorAll('.wheel-overlay').forEach(el => el.remove());
+            wheelOverlayCount = 0;
+        }
+
+        ['dragover', 'dragenter'].forEach(evt => {
+            zone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#c8a33d';
+                zone.style.boxShadow = '0 0 60px rgba(200,163,61,0.15)';
+            });
+        });
+
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.style.borderColor = '';
+            zone.style.boxShadow = '';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) loadPhoto(file);
+        });
+
+        zone.addEventListener('dragleave', () => {
+            zone.style.borderColor = '';
+            zone.style.boxShadow = '';
+        });
+
+        // === WHEEL PICKER ===
+        function buildPicker() {
+            const container = document.getElementById('pickerWheels');
+            container.innerHTML = '';
+            wheelDesigns.forEach((w, i) => {
+                const item = document.createElement('div');
+                item.className = 'picker-wheel-item' + (i === selectedWheel ? ' active' : '');
+                item.innerHTML = `<img src="${w.img}" alt="${w.name}" style="width:60px;height:60px;object-fit:contain;"><span class="pw-name">${w.name}</span>`;
+                item.onclick = () => selectWheel(i);
+                container.appendChild(item);
+            });
+        }
+
+        function selectWheel(index) {
+            selectedWheel = index;
+            document.querySelectorAll('.picker-wheel-item').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+            // Update all existing overlays to new design
+            document.querySelectorAll('.wheel-overlay .wo-img').forEach(el => {
+                el.src = wheelDesigns[index].img;
+            });
+        }
+
+        // === WHEEL OVERLAYS (draggable) ===
+        function addWheelOverlay() {
+            wheelOverlayCount++;
+            const overlay = document.createElement('div');
+            overlay.className = 'wheel-overlay';
+            const size = parseInt(document.getElementById('wheelSize').value);
+            overlay.style.width = size + 'px';
+            overlay.style.height = size + 'px';
+
+            // Position in center-bottom area of canvas
+            const rect = canvasArea.getBoundingClientRect();
+            overlay.style.left = (rect.width / 2 - size / 2 + (wheelOverlayCount % 2 === 0 ? 120 : -120)) + 'px';
+            overlay.style.top = (rect.height * 0.55) + 'px';
+
+            overlay.innerHTML = `
+                <img class="wo-img" src="${wheelDesigns[selectedWheel].img}" style="width:100%;height:100%;object-fit:contain;pointer-events:none;">
+                <button class="remove-wheel" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            makeDraggable(overlay);
+            canvasArea.appendChild(overlay);
+        }
+
+        function makeDraggable(el) {
+            let startX, startY, initialLeft, initialTop;
+
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('remove-wheel')) return;
+                e.preventDefault();
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+                el.style.zIndex = 10;
+
+                const onMove = (e) => {
+                    el.style.left = (initialLeft + e.clientX - startX) + 'px';
+                    el.style.top = (initialTop + e.clientY - startY) + 'px';
+                };
+
+                const onUp = () => {
+                    el.style.zIndex = '';
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            // Touch support
+            el.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('remove-wheel')) return;
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+
+                const onMove = (e) => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    el.style.left = (initialLeft + t.clientX - startX) + 'px';
+                    el.style.top = (initialTop + t.clientY - startY) + 'px';
+                };
+
+                const onEnd = () => {
+                    el.removeEventListener('touchmove', onMove);
+                    el.removeEventListener('touchend', onEnd);
+                };
+
+                el.addEventListener('touchmove', onMove, { passive: false });
+                el.addEventListener('touchend', onEnd);
+            }, { passive: true });
+        }
+
+        // Size slider
+        document.getElementById('wheelSize').addEventListener('input', (e) => {
+            const size = e.target.value + 'px';
+            document.querySelectorAll('.wheel-overlay').forEach(el => {
+                el.style.width = size;
+                el.style.height = size;
+            });
+        });
+
+        function submitOrder() {
+            alert('Заявка отправлена! Мы свяжемся с вами для уточнения деталей заказа.');
+        }
+    </script>
+
+</body>
+</html>
