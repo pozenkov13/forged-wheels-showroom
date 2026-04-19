@@ -3683,13 +3683,15 @@
                 // Try API first, fallback to static JSON
                 let wheels;
                 try {
-                    const resp = await fetch(API_BASE + '/api/wheels');
+                    const resp = await fetch(API_BASE + '/api/wheels?t=' + Date.now(), { cache: 'no-store' });
                     const data = await resp.json();
                     wheels = data.wheels;
                 } catch(e) {
-                    const resp = await fetch('wheels/catalog.json');
+                    const resp = await fetch('wheels/catalog.json?t=' + Date.now(), { cache: 'no-store' });
                     wheels = await resp.json();
                 }
+                // Bust image cache too — append version to each image path
+                wheels.forEach(w => { if (w.image && !w.image.includes('?')) w.image = w.image + '?v=2026041901'; });
 
                 allWheels = wheels;
                 renderCatalog(wheels);
