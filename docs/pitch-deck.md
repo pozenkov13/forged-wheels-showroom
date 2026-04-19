@@ -166,8 +166,8 @@ Foco: **segmento forjado premium europeo** — 1.500-1.800 M€/año, crecimient
 | **Ingresos totales** | **216 k€** | **1,74 M€** | **5,40 M€** |
 | Margen bruto | 43,6 % | 47,8 % | 50,1 % |
 | **EBITDA** | **−39 k€** | **+533 k€** | **+2,21 M€** |
-| Beneficio neto post-IS | −46 k€ | +436 k€ | +1,64 M€ |
-| Caja al cierre del año | 52 k€ | 452 k€ | 1,78 M€ |
+| Beneficio neto post-IS | −47 k€ | +445 k€ | +1,64 M€ |
+| Caja al cierre del año | 52 k€ | 461 k€ | 1,78 M€ |
 
 - **Break-even EBITDA mensual:** mes 7 (dic 2026).
 - **Break-even EBITDA acumulado:** mes 13 (jun 2027).
@@ -227,8 +227,8 @@ Complementado con 8.000 € de aporte propio del fundador ya aportados como fond
 
 Con el apoyo de ENISA alcanzamos:
 
-- **2 años: +1,7 M€ facturación y EBITDA positivo 21 %.**
-- **3 años: +5,4 M€ facturación y EBITDA 30 %.**
+- **2 años: +1,7 M€ facturación y EBITDA 30,6 %.**
+- **3 años: +5,4 M€ facturación y EBITDA 41,0 %.**
 - **IP protegido** — Protocolo notarial de secreto empresarial + marcas OEPM + EUIPO.
 - **Cadena de suministro verificada** con proveedores TÜV/JWL/VIA en China y Taiwán.
 - **Dataset propio creciente** de +25.000 renders sobre coches reales al cierre Y3.
