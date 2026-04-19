@@ -14,7 +14,7 @@
 | Nacionalidad | Federación Rusa |
 | Lugar de residencia | Barcelona, España |
 | Fecha de nacimiento | 21 de abril de 1968 (57 años) |
-| Documento de identificación | NIE **[PENDIENTE: copiar número exacto desde TIE No Lucrativa — PDF en Escritorio/Контакты/]** |
+| Documento de identificación | NIE Z1594695H |
 | Permiso de residencia | Autorización de residencia No Lucrativa (España) — vigente desde 2024, en trámite de modificación a autorización de Emprendedor (Ley 14/2013) tras resolución ENISA |
 | Idiomas | Ruso (nativo), inglés (B1), español (A1 — en proceso de mejora activa) |
 | Email profesional | pozenkov13@gmail.com |

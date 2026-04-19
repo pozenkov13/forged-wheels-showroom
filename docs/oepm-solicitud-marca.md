@@ -32,7 +32,7 @@ Recomendamos solicitar **3 clases** (12, 35 y 42) → coste total **≈ 340 €*
 | Campo | Valor |
 |---|---|
 | Nombre y apellidos | Andrei Potcenkovskii |
-| NIE | [COMPLETAR desde TIE No Lucrativa] |
+| NIE | Z1594695H |
 | Relación con el solicitante | Apoderado / socio promotor |
 | Email | pozenkov13@gmail.com |
 | Teléfono | +34 628 106 939 |
@@ -119,7 +119,7 @@ Si no se presenta oposición, la marca quedará registrada a partir del 4º-6º 
 >
 > **OTORGO PODER** a favor de:
 >
-> **D. ANDREI POTCENKOVSKII**, mayor de edad, con NIE **[COMPLETAR]**, con el mismo domicilio profesional,
+> **D. ANDREI POTCENKOVSKII**, mayor de edad, con NIE Z1594695H, con el mismo domicilio profesional,
 >
 > para que, actuando en nombre y representación de SIGNALWAVES, S.L.U., realice todos los actos necesarios para la **tramitación de solicitudes de marca, nombre comercial y otros títulos de propiedad industrial** ante la **Oficina Española de Patentes y Marcas (OEPM)**, la **Oficina de Propiedad Intelectual de la Unión Europea (EUIPO)** y la **Organización Mundial de la Propiedad Intelectual (WIPO)**, incluyendo, con carácter enunciativo y no limitativo: la firma de solicitudes, el pago de tasas, la contestación a requerimientos, la oposición a marcas de terceros, y la recepción de notificaciones oficiales.
 >
