@@ -1,9 +1,9 @@
 [
   {
     "id": "w1",
-    "name": "HRE S101",
+    "name": "5Tech 01",
     "category": "monoblock",
-    "finish": "brushed",
+    "finish": "brushed silver",
     "sizes": [
       "19",
       "20",
@@ -14,285 +14,36 @@
       "5x120"
     ],
     "et_range": "25-45",
-    "price_from": 500,
-    "price_to": 750,
-    "image": "wheels/w1.png"
+    "price_from": 640,
+    "price_to": 980,
+    "image": "wheels/w1.png",
+    "source": "https://powerwheels.ru/wheel/pw-5tech01/"
   },
   {
     "id": "w2",
-    "name": "Vossen CV3",
-    "category": "concave",
-    "finish": "polished",
-    "sizes": [
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3"
-    ],
-    "et_range": "30-45",
-    "price_from": 480,
-    "price_to": 700,
-    "image": "wheels/w2.png"
-  },
-  {
-    "id": "w3",
-    "name": "ADV.1 Gold",
-    "category": "concave",
-    "finish": "brushed gold",
-    "sizes": [
-      "20",
-      "21"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120"
-    ],
-    "et_range": "25-40",
-    "price_from": 550,
-    "price_to": 820,
-    "image": "wheels/w3.png"
-  },
-  {
-    "id": "w4",
-    "name": "Classic Gold",
-    "category": "monoblock",
-    "finish": "gold",
-    "sizes": [
-      "18",
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3"
-    ],
-    "et_range": "30-50",
-    "price_from": 430,
-    "price_to": 650,
-    "image": "wheels/w4.png"
-  },
-  {
-    "id": "w5",
-    "name": "Silver Multi",
-    "category": "multi-piece",
-    "finish": "silver",
-    "sizes": [
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120"
-    ],
-    "et_range": "25-45",
-    "price_from": 600,
-    "price_to": 900,
-    "image": "wheels/w5.png"
-  },
-  {
-    "id": "w6",
-    "name": "Chrome Deep",
-    "category": "multi-piece",
-    "finish": "chrome",
-    "sizes": [
-      "20",
-      "21",
-      "22"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120",
-      "5x130"
-    ],
-    "et_range": "20-40",
-    "price_from": 700,
-    "price_to": 1100,
-    "image": "wheels/w6.png"
-  },
-  {
-    "id": "w7",
-    "name": "Matte Stealth",
+    "name": "Buggy B07",
     "category": "monoblock",
     "finish": "matte black",
     "sizes": [
-      "19",
-      "20",
-      "21"
+      "17",
+      "18",
+      "19"
     ],
     "pcd": [
       "5x112",
-      "5x114.3",
-      "5x120"
+      "5x114.3"
     ],
-    "et_range": "25-45",
-    "price_from": 460,
-    "price_to": 700,
-    "image": "wheels/w7.png"
-  },
-  {
-    "id": "w8",
-    "name": "Bronze Flow",
-    "category": "concave",
-    "finish": "satin bronze",
-    "sizes": [
-      "20",
-      "21"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120"
-    ],
-    "et_range": "25-40",
-    "price_from": 520,
-    "price_to": 800,
-    "image": "wheels/w8.png"
-  },
-  {
-    "id": "w9",
-    "name": "Vortex V1",
-    "category": "concave",
-    "finish": "brushed titanium",
-    "sizes": [
-      "19",
-      "20",
-      "21"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120"
-    ],
-    "et_range": "25-45",
+    "et_range": "15-35",
     "price_from": 520,
     "price_to": 780,
-    "image": "wheels/w9.png"
+    "image": "wheels/w2.png",
+    "source": "https://powerwheels.ru/wheel/pw-b07/"
   },
   {
-    "id": "w10",
-    "name": "Mesh Pro",
-    "category": "mesh",
-    "finish": "polished chrome",
-    "sizes": [
-      "18",
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3"
-    ],
-    "et_range": "30-45",
-    "price_from": 480,
-    "price_to": 720,
-    "image": "wheels/w10.png"
-  },
-  {
-    "id": "w11",
-    "name": "Split Star",
-    "category": "split-spoke",
-    "finish": "matte black machined",
-    "sizes": [
-      "19",
-      "20",
-      "21",
-      "22"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120",
-      "5x130"
-    ],
-    "et_range": "20-45",
-    "price_from": 550,
-    "price_to": 850,
-    "image": "wheels/w11.png"
-  },
-  {
-    "id": "w12",
-    "name": "Mono Block R",
-    "category": "monoblock",
-    "finish": "satin silver",
-    "sizes": [
-      "18",
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3",
-      "5x120"
-    ],
-    "et_range": "30-50",
-    "price_from": 420,
-    "price_to": 650,
-    "image": "wheels/w12.png"
-  },
-  {
-    "id": "w13",
-    "name": "Deep Dish GT",
+    "id": "w3",
+    "name": "Carbon 01",
     "category": "multi-piece",
-    "finish": "polished lip brushed center",
-    "sizes": [
-      "19",
-      "20",
-      "21"
-    ],
-    "pcd": [
-      "5x112",
-      "5x120",
-      "5x130"
-    ],
-    "et_range": "15-40",
-    "price_from": 680,
-    "price_to": 1100,
-    "image": "wheels/w13.png"
-  },
-  {
-    "id": "w14",
-    "name": "Aero Flow",
-    "category": "concave",
-    "finish": "gloss black",
-    "sizes": [
-      "19",
-      "20",
-      "21",
-      "22"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3",
-      "5x120"
-    ],
-    "et_range": "25-45",
-    "price_from": 490,
-    "price_to": 750,
-    "image": "wheels/w14.png"
-  },
-  {
-    "id": "w15",
-    "name": "Classic Ten",
-    "category": "monoblock",
-    "finish": "polished aluminum",
-    "sizes": [
-      "18",
-      "19",
-      "20"
-    ],
-    "pcd": [
-      "5x112",
-      "5x114.3"
-    ],
-    "et_range": "30-45",
-    "price_from": 400,
-    "price_to": 600,
-    "image": "wheels/w15.png"
-  },
-  {
-    "id": "w16",
-    "name": "Carbon Weave",
-    "category": "mesh",
-    "finish": "dark gunmetal",
+    "finish": "carbon fiber gloss",
     "sizes": [
       "20",
       "21",
@@ -304,15 +55,36 @@
       "5x130"
     ],
     "et_range": "20-40",
-    "price_from": 620,
-    "price_to": 950,
-    "image": "wheels/w16.png"
+    "price_from": 950,
+    "price_to": 1450,
+    "image": "wheels/w3.png",
+    "source": "https://powerwheels.ru/wheel/pw-carbon01/"
   },
   {
-    "id": "w17",
-    "name": "RS Forged",
+    "id": "w4",
+    "name": "Casual C05",
     "category": "split-spoke",
-    "finish": "bronze and black",
+    "finish": "gloss black machined",
+    "sizes": [
+      "18",
+      "19",
+      "20"
+    ],
+    "pcd": [
+      "5x112",
+      "5x114.3"
+    ],
+    "et_range": "30-45",
+    "price_from": 560,
+    "price_to": 820,
+    "image": "wheels/w4.png",
+    "source": "https://powerwheels.ru/wheel/pw-c05/"
+  },
+  {
+    "id": "w5",
+    "name": "Casual C12",
+    "category": "mesh",
+    "finish": "matte gunmetal",
     "sizes": [
       "19",
       "20",
@@ -320,19 +92,143 @@
     ],
     "pcd": [
       "5x112",
+      "5x120"
+    ],
+    "et_range": "25-45",
+    "price_from": 580,
+    "price_to": 870,
+    "image": "wheels/w5.png",
+    "source": "https://powerwheels.ru/wheel/pw-c12/"
+  },
+  {
+    "id": "w6",
+    "name": "Classic 01",
+    "category": "monoblock",
+    "finish": "polished silver",
+    "sizes": [
+      "18",
+      "19",
+      "20"
+    ],
+    "pcd": [
+      "5x112",
+      "5x114.3"
+    ],
+    "et_range": "30-50",
+    "price_from": 490,
+    "price_to": 720,
+    "image": "wheels/w6.png",
+    "source": "https://powerwheels.ru/wheel/pw-classic01/"
+  },
+  {
+    "id": "w7",
+    "name": "Classic 03",
+    "category": "monoblock",
+    "finish": "matte bronze",
+    "sizes": [
+      "18",
+      "19",
+      "20"
+    ],
+    "pcd": [
+      "5x112",
       "5x114.3",
       "5x120"
     ],
     "et_range": "25-45",
-    "price_from": 560,
-    "price_to": 870,
-    "image": "wheels/w17.png"
+    "price_from": 510,
+    "price_to": 760,
+    "image": "wheels/w7.png",
+    "source": "https://powerwheels.ru/wheel/pw-classic03/"
   },
   {
-    "id": "w18",
-    "name": "Luxury Plus",
+    "id": "w8",
+    "name": "Drag D01",
+    "category": "monoblock",
+    "finish": "gloss black",
+    "sizes": [
+      "17",
+      "18",
+      "19",
+      "20"
+    ],
+    "pcd": [
+      "5x112",
+      "5x114.3"
+    ],
+    "et_range": "20-40",
+    "price_from": 540,
+    "price_to": 820,
+    "image": "wheels/w8.png",
+    "source": "https://powerwheels.ru/wheel/pw-d01/"
+  },
+  {
+    "id": "w9",
+    "name": "Diamond Cut 05",
+    "category": "concave",
+    "finish": "diamond cut silver",
+    "sizes": [
+      "19",
+      "20",
+      "21"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120"
+    ],
+    "et_range": "25-45",
+    "price_from": 620,
+    "price_to": 950,
+    "image": "wheels/w9.png",
+    "source": "https://powerwheels.ru/wheel/pw-dc05/"
+  },
+  {
+    "id": "w10",
+    "name": "Diamond Cut 015",
+    "category": "split-spoke",
+    "finish": "diamond cut black",
+    "sizes": [
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120",
+      "5x130"
+    ],
+    "et_range": "20-40",
+    "price_from": 680,
+    "price_to": 1050,
+    "image": "wheels/w10.png",
+    "source": "https://powerwheels.ru/wheel/pw-dc015/"
+  },
+  {
+    "id": "w11",
+    "name": "Floating FL03",
+    "category": "concave",
+    "finish": "satin titanium",
+    "sizes": [
+      "19",
+      "20",
+      "21"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120"
+    ],
+    "et_range": "25-45",
+    "price_from": 660,
+    "price_to": 990,
+    "image": "wheels/w11.png",
+    "source": "https://powerwheels.ru/wheel/pw-fl03/"
+  },
+  {
+    "id": "w12",
+    "name": "Floating FL07",
     "category": "multi-piece",
-    "finish": "high polish gold rivets",
+    "finish": "polished lip brushed face",
     "sizes": [
       "20",
       "21",
@@ -344,15 +240,37 @@
       "5x130"
     ],
     "et_range": "15-35",
-    "price_from": 750,
+    "price_from": 780,
     "price_to": 1200,
-    "image": "wheels/w18.png"
+    "image": "wheels/w12.png",
+    "source": "https://powerwheels.ru/wheel/pw-fl07/"
   },
   {
-    "id": "w19",
-    "name": "Stealth X",
+    "id": "w13",
+    "name": "Luxury L05",
+    "category": "multi-piece",
+    "finish": "high polish chrome",
+    "sizes": [
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120"
+    ],
+    "et_range": "20-40",
+    "price_from": 820,
+    "price_to": 1250,
+    "image": "wheels/w13.png",
+    "source": "https://powerwheels.ru/wheel/pw-l05/"
+  },
+  {
+    "id": "w14",
+    "name": "Luxury L012",
     "category": "concave",
-    "finish": "full matte black",
+    "finish": "brushed champagne",
     "sizes": [
       "20",
       "21",
@@ -360,20 +278,20 @@
     ],
     "pcd": [
       "5x112",
-      "5x114.3",
       "5x120",
       "5x130"
     ],
     "et_range": "20-40",
-    "price_from": 530,
-    "price_to": 820,
-    "image": "wheels/w19.png"
+    "price_from": 740,
+    "price_to": 1100,
+    "image": "wheels/w14.png",
+    "source": "https://powerwheels.ru/wheel/pw-l012-concave/"
   },
   {
-    "id": "w20",
-    "name": "Touring Classic",
-    "category": "monoblock",
-    "finish": "silver diamond cut",
+    "id": "w15",
+    "name": "Motorsport MS03",
+    "category": "split-spoke",
+    "finish": "matte black machined",
     "sizes": [
       "18",
       "19",
@@ -381,12 +299,119 @@
     ],
     "pcd": [
       "5x112",
-      "5x114.3"
+      "5x114.3",
+      "5x120"
     ],
-    "et_range": "35-50",
-    "price_from": 380,
-    "price_to": 580,
-    "image": "wheels/w20.png"
+    "et_range": "25-45",
+    "price_from": 600,
+    "price_to": 920,
+    "image": "wheels/w15.png",
+    "source": "https://powerwheels.ru/wheel/pw-ms03/"
+  },
+  {
+    "id": "w16",
+    "name": "Motorsport MS17",
+    "category": "concave",
+    "finish": "gloss black",
+    "sizes": [
+      "19",
+      "20",
+      "21"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120"
+    ],
+    "et_range": "20-40",
+    "price_from": 640,
+    "price_to": 970,
+    "image": "wheels/w16.png",
+    "source": "https://powerwheels.ru/wheel/pw-ms017/"
+  },
+  {
+    "id": "w17",
+    "name": "Offroad 02",
+    "category": "monoblock",
+    "finish": "matte bronze",
+    "sizes": [
+      "17",
+      "18",
+      "20"
+    ],
+    "pcd": [
+      "5x150",
+      "6x139.7",
+      "5x127"
+    ],
+    "et_range": "0-25",
+    "price_from": 580,
+    "price_to": 880,
+    "image": "wheels/w17.png",
+    "source": "https://powerwheels.ru/wheel/pw-offroad02/"
+  },
+  {
+    "id": "w18",
+    "name": "Split 02",
+    "category": "multi-piece",
+    "finish": "polished + black center",
+    "sizes": [
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120",
+      "5x130"
+    ],
+    "et_range": "15-35",
+    "price_from": 780,
+    "price_to": 1200,
+    "image": "wheels/w18.png",
+    "source": "https://powerwheels.ru/wheel/pw-split02/"
+  },
+  {
+    "id": "w19",
+    "name": "Split 04",
+    "category": "multi-piece",
+    "finish": "brushed gold lip",
+    "sizes": [
+      "20",
+      "21",
+      "22"
+    ],
+    "pcd": [
+      "5x112",
+      "5x120"
+    ],
+    "et_range": "20-40",
+    "price_from": 820,
+    "price_to": 1280,
+    "image": "wheels/w19.png",
+    "source": "https://powerwheels.ru/wheel/pw-split04/"
+  },
+  {
+    "id": "w20",
+    "name": "Stratix S01",
+    "category": "split-spoke",
+    "finish": "satin graphite",
+    "sizes": [
+      "19",
+      "20",
+      "21",
+      "22"
+    ],
+    "pcd": [
+      "5x112",
+      "5x114.3",
+      "5x120"
+    ],
+    "et_range": "20-45",
+    "price_from": 680,
+    "price_to": 1050,
+    "image": "wheels/w20.png",
+    "source": "https://powerwheels.ru/wheel/pw-s01/"
   },
   {
     "id": "w21",
