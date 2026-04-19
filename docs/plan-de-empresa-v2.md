@@ -388,6 +388,8 @@ Los ratios LTV/CAC de 3,5x (Y1) y 6,8x (Y3) superan holgadamente el benchmark de
 
 La caja mínima a lo largo del Año 1 se registra en M3 (45.885 €), con holgura suficiente frente a la inversión inicial. Tras el mes 13 la generación de caja se acelera hasta alcanzar 1,78 M€ al cierre del Año 3 sin necesidad de financiación adicional.
 
+*Nota técnica sobre la cuota ENISA del Año 1:* durante el período de carencia de capital (meses 1-12) se abonan exclusivamente intereses al tipo fijo del 4,25 % TIN, por lo que la cuota mensual efectiva es de 266 €/mes (total Y1: 3.192 €). El importe de 3.825 € que podría figurar en cálculos alternativos corresponde a una amortización lineal teórica del primer año; el valor real devengado conforme al cuadro francés con carencia es el utilizado en el modelo (diferencia de 633 € que no afecta al resultado neto del ejercicio).
+
 ### 10.3 Uso detallado de los 75.000 € de ENISA
 
 | Partida | Importe (€) | % | Mes | Justificación |
