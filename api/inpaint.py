@@ -42,9 +42,18 @@ def load_catalog():
 
 def build_wheel_prompt(wheel):
     return (
-        "Take the car from image 1. Change both of its wheels to look exactly "
-        "like the wheel rim shown in image 2. The car, body color, background, "
-        "and lighting must stay identical. Only the wheels change."
+        "OUTPUT REQUIREMENT: the output image MUST be a modified copy of IMAGE 1 "
+        "(the car photograph). IMAGE 2 is a wheel-design reference ONLY — do NOT "
+        "copy it as the output. "
+        "\n\nTASK: in IMAGE 1, replace ONLY the two visible wheel rims on the car "
+        "with rims whose spoke pattern, color, and finish match IMAGE 2. Scale the "
+        "new rims to exactly fit the existing wheel wells. "
+        "\n\nPRESERVE FROM IMAGE 1 (must stay pixel-identical): car body shape, "
+        "paint color, windows, reflections, lighting, shadows, ground, background, "
+        "camera angle, framing, aspect ratio. "
+        "\n\nDO NOT: output a wheel closeup, output IMAGE 2, change the car, crop "
+        "the scene, or add watermarks. The output must look like the original "
+        "IMAGE 1 photograph with only the wheel designs swapped."
     )
 
 
@@ -259,9 +268,16 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "Take the car from image 1. Change both of its wheels to look exactly "
-                    "like the wheel rim shown in image 2. The car, body color, background, "
-                    "and lighting must stay identical. Only the wheels change."
+                    "OUTPUT REQUIREMENT: the output image MUST be a modified copy of IMAGE 1 "
+                    "(the car photograph). IMAGE 2 is a wheel-design reference ONLY — do NOT "
+                    "copy it as the output. "
+                    "\n\nTASK: in IMAGE 1, replace ONLY the two visible wheel rims with rims "
+                    "whose spoke pattern, color, and finish match IMAGE 2. Scale to fit the "
+                    "existing wheel wells. "
+                    "\n\nPRESERVE FROM IMAGE 1: car body, paint, windows, reflections, lighting, "
+                    "shadows, ground, background, camera angle, framing. "
+                    "\n\nDO NOT output a wheel closeup or IMAGE 2 — the output must look like "
+                    "IMAGE 1 with only the wheel designs swapped."
                 )
             else:
                 catalog = load_catalog()
