@@ -187,8 +187,10 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def run_nano_banana_edit(car_url, wheel_url, prompt):
-    """Nano Banana Pro (Gemini 3 Pro Image) reference-based wheel swap."""
+def submit_nano_banana_edit(car_url, wheel_url, prompt):
+    """Submit Nano Banana Pro (Gemini 3 Pro Image) job — returns response_url WITHOUT waiting.
+    Client polls /api/inpaint?poll=<url> afterwards. This avoids Vercel Hobby 60s cap.
+    """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
@@ -201,29 +203,34 @@ def run_nano_banana_edit(car_url, wheel_url, prompt):
             "output_format": "jpeg",
         },
         headers=headers,
-        timeout=30
+        timeout=20
     )
     if submit_resp.status_code != 200:
         return None, f"submit_failed_{submit_resp.status_code}"
-
     response_url = submit_resp.json().get("response_url")
     if not response_url:
         return None, "no_response_url"
+    return response_url, None
 
-    # Leave budget for Florence stages — Gemini gets ~45s
-    deadline = time.time() + 45
-    while time.time() < deadline:
-        time.sleep(1.5)
-        poll_resp = requests.get(response_url, headers=headers, timeout=10)
-        if poll_resp.status_code != 200:
-            continue
-        result = poll_resp.json()
-        if result.get("status") in ("IN_QUEUE", "IN_PROGRESS"):
-            continue
-        if "images" in result and result["images"]:
-            return result["images"][0]["url"], None
-        return None, f"unexpected_result_{list(result.keys())}"
-    return None, "timeout"
+
+def poll_fal(response_url):
+    """Single poll to fal.ai. Returns (status, data) where status is one of:
+    'in_progress', 'completed', 'failed'.
+    """
+    fal_key = get_fal_key()
+    headers = {"Authorization": f"Key {fal_key}"}
+    try:
+        r = requests.get(response_url, headers=headers, timeout=10)
+    except Exception as e:
+        return "in_progress", None  # retry
+    if r.status_code != 200:
+        return "in_progress", None
+    result = r.json()
+    if result.get("status") in ("IN_QUEUE", "IN_PROGRESS"):
+        return "in_progress", None
+    if "images" in result and result["images"]:
+        return "completed", {"result_url": result["images"][0]["url"]}
+    return "failed", {"error": f"unexpected_{list(result.keys())}"}
 
 
 class handler(BaseHTTPRequestHandler):
@@ -240,6 +247,24 @@ class handler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length)
             data = json.loads(body)
 
+            # ─────────────────────────────────────────────────────────
+            # POLL MODE — client asks "is the job done?"
+            # Keeps Vercel invocation under 5s per poll.
+            # ─────────────────────────────────────────────────────────
+            if data.get("action") == "poll":
+                response_url = data.get("response_url")
+                if not response_url:
+                    return self._error(400, "missing_fields", "response_url required for poll")
+                status, info = poll_fal(response_url)
+                payload = {"status": status}
+                if info:
+                    payload.update(info)
+                self._json(payload)
+                return
+
+            # ─────────────────────────────────────────────────────────
+            # SUBMIT MODE — client starts a new wheel swap job
+            # ─────────────────────────────────────────────────────────
             image_b64 = data.get("image")
             wheel_id = data.get("wheel_id")
             custom_wheel_image = data.get("custom_wheel_image")
@@ -338,23 +363,20 @@ class handler(BaseHTTPRequestHandler):
                 soft_warning = None
 
             # ─────────────────────────────────────────────────────
-            # Stage 4: Upload wheel reference + run Gemini swap
+            # Stage 4: Upload wheel ref + submit Gemini job (no wait!)
+            # Returns response_url — client polls via action=poll.
             # ─────────────────────────────────────────────────────
             wheel_url = upload_to_fal(wheel_bytes, f"{wheel_id}.png", "image/png")
 
-            result_url, error = run_nano_banana_edit(car_url_for_gemini, wheel_url, prompt)
+            response_url, error = submit_nano_banana_edit(car_url_for_gemini, wheel_url, prompt)
 
             if error:
-                # Map backend errors to user-friendly codes
-                if "timeout" in error:
-                    return self._error(504, "timeout",
-                        "The AI took too long. This usually means the image is very complex. Try a simpler side-view photo.")
                 return self._error(500, "ai_error",
-                    "The AI couldn't process this image. Try a different photo or a different wheel.")
+                    "Could not submit AI job. Please try again.")
 
             self._json({
                 "success": True,
-                "result_url": result_url,
+                "response_url": response_url,
                 "wheel_applied": wheel_display_name,
                 "model": "nano-banana-pro/edit",
                 "is_custom": is_custom,
@@ -364,9 +386,7 @@ class handler(BaseHTTPRequestHandler):
                     "wheels_detected": len(wheels_found),
                     "crop_used": crop_used,
                     "crop_info": crop_info,
-                    "image_resized": orig_w and max(orig_w, orig_h) != max(orig_w, orig_h),
                 },
-                "prompt": prompt,
             })
 
         except Exception as e:

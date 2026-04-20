@@ -3244,7 +3244,24 @@
                     })
                 });
 
-                const result = await resp.json();
+                let result = await resp.json();
+                // Poll if async submit (same pattern as catalog path)
+                if (result.success && result.response_url && !result.result_url) {
+                    const startedAt = Date.now();
+                    while (Date.now() - startedAt < 4 * 60 * 1000) {
+                        await new Promise(r => setTimeout(r, 2500));
+                        try {
+                            const pr = await fetch(API_BASE + '/api/inpaint', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({action: 'poll', response_url: result.response_url})
+                            });
+                            const pd = await pr.json();
+                            if (pd.status === 'completed' && pd.result_url) { result.result_url = pd.result_url; break; }
+                            if (pd.status === 'failed') { result.success = false; break; }
+                        } catch (e) {}
+                    }
+                }
                 if (result.success && result.result_url) {
                     const tmpImg = new Image();
                     tmpImg.crossOrigin = 'anonymous';
@@ -3587,7 +3604,39 @@
                     })
                 });
 
-                const result = await resp.json();
+                let result = await resp.json();
+
+                // NEW: submit returned response_url → poll until complete (up to 4 min)
+                if (result.success && result.response_url && !result.result_url) {
+                    const startedAt = Date.now();
+                    const POLL_TIMEOUT_MS = 4 * 60 * 1000;
+                    while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+                        await new Promise(r => setTimeout(r, 2500));
+                        try {
+                            const pollResp = await fetch(inpaintUrl, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({action: 'poll', response_url: result.response_url})
+                            });
+                            const pollData = await pollResp.json();
+                            if (pollData.status === 'completed' && pollData.result_url) {
+                                result.result_url = pollData.result_url;
+                                break;
+                            }
+                            if (pollData.status === 'failed') {
+                                result.success = false;
+                                result.error_code = 'ai_error';
+                                result.error = pollData.error || 'AI job failed';
+                                break;
+                            }
+                        } catch (e) { /* retry */ }
+                    }
+                    if (!result.result_url && result.success) {
+                        result.success = false;
+                        result.error_code = 'timeout';
+                        result.error = 'AI job exceeded 4 minutes';
+                    }
+                }
 
                 if (result.success && result.result_url) {
                     // Preload the result image before swapping — prevents flicker
