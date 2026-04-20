@@ -41,12 +41,17 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    # FLUX Kontext prefers short, direct, imperative prompts.
-    # It handles image-1-as-base + image-2-as-reference natively.
+    # Nano Banana Pro (Gemini 3) responds to explicit scene framing.
+    # The reference card is labeled "WHEEL DESIGN REFERENCE" — Gemini
+    # treats it unambiguously as a reference, not as output content.
     return (
-        "Replace the car's wheel rims with the wheel design from the second "
-        "reference image. Keep the car body, paint color, windows, background, "
-        "and camera angle unchanged."
+        "The first image is the main photograph of a car. The second image "
+        "is a design reference card labeled 'WHEEL DESIGN REFERENCE' — it "
+        "shows a wheel rim on gray background. Replace the wheel rims on "
+        "the car in the first image with rims that exactly match the design, "
+        "spoke pattern, color, finish, and brake caliper color shown in the "
+        "reference card. Output the full car photograph with only the wheels "
+        "changed — do not output the reference card."
     )
 
 
@@ -86,12 +91,18 @@ def preprocess_image(image_bytes, max_side=2500):
 
 
 def prepare_wheel_reference(wheel_bytes):
-    """Composite the wheel PNG onto a distinctive gray background so Gemini
-    never mistakes it for the output image. Also downsizes to 600x600 to signal
-    'this is a small reference card, not the base image'.
+    """Compose the wheel PNG into a labeled reference card.
+
+    A/B test (20/04/2026) showed Nano Banana Pro (Gemini 3 Pro Image) outputs
+    the reference wheel as a closeup when the two images are ambiguous. Adding
+    an explicit "WHEEL DESIGN REFERENCE" text label resolved this — Gemini
+    never hallucinates text overlays into the output, so it unambiguously
+    treats this as a reference card.
+
+    Output: 700x700 JPEG with gray bg + text label + centered wheel.
     """
     try:
-        from PIL import Image
+        from PIL import Image, ImageDraw, ImageFont
     except ImportError:
         return wheel_bytes
 
@@ -99,12 +110,32 @@ def prepare_wheel_reference(wheel_bytes):
         wheel = Image.open(BytesIO(wheel_bytes))
         if wheel.mode != "RGBA":
             wheel = wheel.convert("RGBA")
-        # Fit wheel into 500x500 box (keep aspect), place on 600x600 gray canvas
         wheel.thumbnail((500, 500), Image.LANCZOS)
-        canvas = Image.new("RGB", (600, 600), (64, 64, 64))  # dark neutral gray
-        wx = (600 - wheel.width) // 2
-        wy = (600 - wheel.height) // 2
-        canvas.paste(wheel, (wx, wy), wheel if wheel.mode == "RGBA" else None)
+
+        canvas = Image.new("RGB", (700, 700), (64, 64, 64))
+        # Center wheel slightly below top to leave room for label
+        wx = (700 - wheel.width) // 2
+        wy = (700 - wheel.height) // 2 + 30
+        canvas.paste(wheel, (wx, wy), wheel)
+
+        # Add label — key signal to Gemini that this is a reference
+        draw = ImageDraw.Draw(canvas)
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 22)
+        except Exception:
+            try:
+                font = ImageFont.truetype("DejaVuSans.ttf", 22)
+            except Exception:
+                font = ImageFont.load_default()
+        label = "WHEEL DESIGN REFERENCE"
+        # Compute text width for centering
+        try:
+            bbox = draw.textbbox((0, 0), label, font=font)
+            tw = bbox[2] - bbox[0]
+        except Exception:
+            tw = 260
+        draw.text(((700 - tw) // 2, 20), label, fill=(210, 210, 210), font=font)
+
         buf = BytesIO()
         canvas.save(buf, format="JPEG", quality=92)
         return buf.getvalue()
@@ -213,35 +244,30 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def pick_aspect_ratio(w, h):
-    """Map (w,h) to closest FLUX Kontext allowed ratio."""
-    if not w or not h:
-        return "16:9"
-    r = w / h
-    candidates = [
-        (21/9, "21:9"), (16/9, "16:9"), (3/2, "3:2"), (4/3, "4:3"),
-        (1.0, "1:1"), (3/4, "3:4"), (2/3, "2:3"), (9/16, "9:16"), (9/21, "9:21"),
-    ]
-    return min(candidates, key=lambda c: abs(c[0] - r))[1]
+def submit_nano_banana_edit(car_url, wheel_url, prompt):
+    """Submit Nano Banana Pro (Gemini 3 Pro Image) edit.
 
+    A/B test (20/04) vs FLUX Kontext Max Multi on Tesla Model 3:
+    - Kontext: generic multi-spoke wheel (general style, wrong pattern)
+    - Nano Banana + labeled reference card: exact Diamond Cut design
+      including brake caliper color. Wins on product fidelity.
 
-def submit_kontext_edit(car_url, wheel_url, prompt, aspect_ratio="16:9"):
-    """Submit FLUX Pro Kontext Max multi-image edit."""
+    The key unlock was the 'WHEEL DESIGN REFERENCE' text label on the
+    reference card (see prepare_wheel_reference). Without it, Gemini
+    outputs the reference wheel as a closeup instead of the scene.
+    """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
-
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/flux-pro/kontext/max/multi",
+        "https://queue.fal.run/fal-ai/nano-banana-pro/edit",
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
-            "guidance_scale": 4.5,
             "num_images": 1,
             "output_format": "jpeg",
-            "aspect_ratio": aspect_ratio,
         },
         headers=headers,
-        timeout=20
+        timeout=20,
     )
     if submit_resp.status_code != 200:
         return None, f"submit_failed_{submit_resp.status_code}"
@@ -346,9 +372,12 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "Replace the car's wheel rims with the wheel design from the "
-                    "second reference image. Keep the car body, paint color, "
-                    "windows, background, and camera angle unchanged."
+                    "The first image is the main photograph of a car. The second "
+                    "image shows a wheel that the user wants installed. Replace "
+                    "the wheel rims on the car in the first image with rims that "
+                    "exactly match the design, spoke pattern, color, and finish "
+                    "of the wheel shown in the second image. Output the full car "
+                    "photograph with only the wheels changed."
                 )
             else:
                 catalog = load_catalog()
@@ -426,12 +455,7 @@ class handler(BaseHTTPRequestHandler):
             wheel_ref_bytes = prepare_wheel_reference(wheel_bytes)
             wheel_url = upload_to_fal(wheel_ref_bytes, f"{wheel_id}_ref.jpg", "image/jpeg")
 
-            # Compute aspect ratio of the (possibly cropped) car image
-            car_w = (crop_info["cropped"][0] if crop_info else orig_w) or 16
-            car_h = (crop_info["cropped"][1] if crop_info else orig_h) or 9
-            ar = pick_aspect_ratio(car_w, car_h)
-
-            response_url, error = submit_kontext_edit(car_url_for_gemini, wheel_url, prompt, aspect_ratio=ar)
+            response_url, error = submit_nano_banana_edit(car_url_for_gemini, wheel_url, prompt)
 
             if error:
                 return self._error(500, "ai_error",
@@ -441,7 +465,7 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "response_url": response_url,
                 "wheel_applied": wheel_display_name,
-                "model": "flux-pro/kontext/max/multi",
+                "model": "nano-banana-pro/edit",
                 "is_custom": is_custom,
                 "soft_warning": soft_warning,
                 "diagnostics": {
