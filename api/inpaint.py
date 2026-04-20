@@ -42,19 +42,15 @@ def load_catalog():
 
 def build_wheel_prompt(wheel):
     return (
-        "The first image is the main photograph of a car. "
-        "The second image is a design reference card labeled 'WHEEL DESIGN "
-        "REFERENCE' — it shows a wheel rim on gray background. "
-        "Your task: output a single photograph that is IDENTICAL to the first "
-        "image in every way — same car, same body, same paint color, same "
-        "windows, same background, same lighting, same composition, same "
-        "aspect ratio — EXCEPT the car's wheel rims are replaced with rims "
-        "matching the design, spoke pattern, color, finish, and brake caliper "
-        "color shown in the reference card. "
-        "Do NOT output the reference card. Do NOT create a collage or "
-        "side-by-side composition. Do NOT add text or labels. "
-        "The output is ONE photograph of the car from the first image with "
-        "only the wheels changed."
+        "TASK: photo editing. Take the CAR PHOTOGRAPH (image 1) and replace "
+        "only its wheel rims with the design shown in the REFERENCE CARD "
+        "(image 2, labeled 'WHEEL DESIGN REFERENCE'). "
+        "\n\nOUTPUT: a single edited copy of image 1. Same resolution, same "
+        "aspect ratio, same framing, same car, same background — only the "
+        "rims changed to match the reference. "
+        "\n\nFORBIDDEN: do not output image 2, do not create a collage or "
+        "side-by-side, do not add any text or 'reference' label to the "
+        "output, do not zoom in, do not crop, do not change the car model."
     )
 
 
@@ -247,7 +243,7 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def submit_nano_banana_edit(car_url, wheel_url, prompt, num_images=2):
+def submit_nano_banana_edit(car_url, wheel_url, prompt, num_images=1):
     """Submit Nano Banana Pro (Gemini 3 Pro Image) edit.
 
     A/B test (20/04) vs FLUX Kontext Max Multi on Tesla Model 3:
@@ -378,13 +374,11 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "The first image is the main photograph of a car. The second "
-                    "image shows a wheel rim that the user wants installed. "
-                    "Output a single photograph IDENTICAL to the first image — "
-                    "same car, body, paint, background, lighting, composition, "
-                    "aspect ratio — EXCEPT the wheel rims match the design of "
-                    "the wheel in the second image. Do NOT create a collage or "
-                    "composition. Do NOT output the reference."
+                    "TASK: photo editing. Take the car photograph (image 1) and "
+                    "replace only its wheel rims with the design shown in image 2. "
+                    "OUTPUT: a single edited copy of image 1. Same resolution, "
+                    "aspect ratio, framing, car, and background — only the rims "
+                    "changed. FORBIDDEN: collage, text labels, zoom, crop."
                 )
             else:
                 catalog = load_catalog()
