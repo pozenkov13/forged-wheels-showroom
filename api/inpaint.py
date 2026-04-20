@@ -229,7 +229,6 @@ def submit_kontext_edit(car_url, wheel_url, prompt):
             "guidance_scale": 3.5,
             "num_images": 1,
             "output_format": "jpeg",
-            "aspect_ratio": "match_input_image",
         },
         headers=headers,
         timeout=20
@@ -269,17 +268,16 @@ def poll_fal(response_url):
     if st in ("FAILED", "ERROR"):
         return "failed", {"error": sd.get("error", "job_failed")}
     if st == "COMPLETED":
-        # Fetch actual result
         try:
             rr = requests.get(response_url, headers=headers, timeout=10)
-            if rr.status_code == 200:
-                result = rr.json()
-                if "images" in result and result["images"]:
-                    return "completed", {"result_url": result["images"][0]["url"]}
-                return "failed", {"error": f"no_images_{list(result.keys())}"}
-        except Exception:
-            pass
-        return "in_progress", None
+            result = rr.json() if rr.content else {}
+            if rr.status_code == 200 and "images" in result and result["images"]:
+                return "completed", {"result_url": result["images"][0]["url"]}
+            # status COMPLETED but no images → validation or model error
+            detail = result.get("detail") or result.get("error") or f"unexpected_{list(result.keys())}"
+            return "failed", {"error": str(detail)[:200]}
+        except Exception as e:
+            return "failed", {"error": f"fetch_error: {e}"[:200]}
     return "in_progress", None
 
 
