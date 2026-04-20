@@ -129,8 +129,10 @@ def composite_wheels(car_bytes, wheel_bboxes, wheel_bytes_per_bbox):
         cx = bbox["x"] + bbox["w"] / 2
         cy = bbox["y"] + bbox["h"] / 2
 
-        # 1. Inpaint wheel area with radial fender→road gradient
-        radius = int(max(bbox["w"], bbox["h"]) * 0.55)
+        # 1. Inpaint wheel area with radial fender→road gradient.
+        # Must cover at least as much area as the scaled overlay (scale 1.20)
+        # to fully hide the original rim + tire.
+        radius = int(max(bbox["w"], bbox["h"]) * 0.62)
         # Sample fender above and road below
         y_a = max(0, int(cy - radius * 1.15))
         y_a_end = max(0, int(cy - radius * 0.95))
@@ -158,8 +160,9 @@ def composite_wheels(car_bytes, wheel_bboxes, wheel_bytes_per_bbox):
         mask3 = wheel_mask[..., np.newaxis]
         car_np = car_np * (1 - mask3) + gradient_full * mask3
 
-        # 2. Resize wheel to expanded bbox
-        scale = 1.08
+        # 2. Resize wheel. 1.15× scale fills arch without clipping fender.
+        # Bbox center = wheel center (no offset — Florence is accurate there).
+        scale = 1.15
         new_w = int(bbox["w"] * scale)
         new_h = int(bbox["h"] * scale)
         new_x = int(cx - new_w / 2)
