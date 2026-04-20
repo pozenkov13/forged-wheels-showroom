@@ -3314,35 +3314,74 @@
                         resolve({ok: false, reason: 'Image too large (' + w + '×' + h + '). Please resize to under 3000px width before uploading.'});
                         return;
                     }
-                    // Screenshots of wheel-only photos (PowerWheels-style product shots) are usually 1:1 square
-                    // with >60% of pixels being white/black (studio background). A real car photo has richer composition.
-                    if (Math.abs(aspect - 1.0) < 0.03) {
-                        resolve({ok: false, reason: 'Looks like a wheel product photo (square format). To try a custom wheel, use the <b>"Upload your wheel"</b> button at the bottom of the shelf, not the car slot.'});
-                        return;
-                    }
                     if (file && file.size > 12 * 1024 * 1024) {
                         resolve({ok: false, reason: 'File too large (' + Math.round(file.size / 1024 / 1024) + ' MB). Please use an image under 12 MB.'});
                         return;
                     }
 
-                    // Sample pixels to detect screenshot-like content (lots of UI-chrome:
-                    // uniform white/light areas that are NOT a studio wheel photo but also not a car).
-                    // If the image has a large white band at the top (common in browser screenshots),
-                    // warn but still allow.
+                    // Sample pixels to classify: product photo (uniform bg, single centered object)
+                    // vs real car photo (varied composition with top/bottom differentiation).
                     try {
                         const canvas = document.createElement('canvas');
-                        canvas.width = 80; canvas.height = Math.round(80 / aspect);
+                        canvas.width = 100; canvas.height = Math.round(100 / aspect);
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                        const W = canvas.width, H = canvas.height;
+
+                        // 1) Uniform-background detection: sample 4 corners — if all similar, it's studio
+                        const corners = [
+                            [2, 2], [W-3, 2], [2, H-3], [W-3, H-3]
+                        ].map(([x,y]) => {
+                            const i = (y * W + x) * 4;
+                            return [data[i], data[i+1], data[i+2]];
+                        });
+                        const avg = corners.reduce((a,c) => [a[0]+c[0], a[1]+c[1], a[2]+c[2]], [0,0,0]).map(v => v/4);
+                        const cornerVariance = corners.reduce((s,c) => s + Math.abs(c[0]-avg[0]) + Math.abs(c[1]-avg[1]) + Math.abs(c[2]-avg[2]), 0) / 4;
+
+                        // 2) Top-vs-bottom half: real cars have sky/wall at top, road at bottom — different avg colors
+                        let topR=0, topG=0, topB=0, botR=0, botG=0, botB=0, tc=0, bc=0;
+                        for (let y = 0; y < H; y++) {
+                            for (let x = 0; x < W; x++) {
+                                const i = (y * W + x) * 4;
+                                if (y < H/2) { topR += data[i]; topG += data[i+1]; topB += data[i+2]; tc++; }
+                                else { botR += data[i]; botG += data[i+1]; botB += data[i+2]; bc++; }
+                            }
+                        }
+                        topR/=tc; topG/=tc; topB/=tc; botR/=bc; botG/=bc; botB/=bc;
+                        const topBotDiff = Math.abs(topR-botR) + Math.abs(topG-botG) + Math.abs(topB-botB);
+
+                        // 3) White-ratio as before
                         let whitePixels = 0;
                         for (let i = 0; i < data.length; i += 4) {
-                            const r = data[i], g = data[i+1], b = data[i+2];
-                            if (r > 235 && g > 235 && b > 235) whitePixels++;
+                            if (data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) whitePixels++;
                         }
-                        const whiteRatio = whitePixels / (canvas.width * canvas.height);
-                        if (whiteRatio > 0.55) {
-                            resolve({ok: false, reason: 'Image looks like a screenshot or mostly-white background. Please upload a <b>real photo of your car</b> (parking lot, garage, street) — not a screenshot of a website or configurator.'});
+                        const whiteRatio = whitePixels / (W * H);
+
+                        // 4) Aspect ratio: near-square (0.8-1.2) is suspicious for product shots
+                        const isNearSquare = aspect >= 0.80 && aspect <= 1.25;
+
+                        // Decision logic (weighted signals)
+                        // Strong product-photo indicators:
+                        //  - uniform corners (variance < 18)
+                        //  - top and bottom look similar (diff < 25) — no sky/road gradient
+                        //  - high white ratio (>45%) — studio background
+                        const uniformCorners = cornerVariance < 20;
+                        const flatComposition = topBotDiff < 30;
+                        const studioWhite = whiteRatio > 0.40;
+
+                        let productScore = 0;
+                        if (uniformCorners) productScore++;
+                        if (flatComposition) productScore++;
+                        if (studioWhite) productScore++;
+                        if (isNearSquare) productScore++;
+
+                        if (productScore >= 3) {
+                            resolve({ok: false, reason: 'This looks like a <b>wheel product photo</b>, not a car. To try a custom wheel, use the <b>"WHEEL →"</b> button at the top right of the shelf. To continue, upload a real photo of your car (side view, parking lot or garage).'});
+                            return;
+                        }
+                        if (whiteRatio > 0.60) {
+                            resolve({ok: false, reason: 'Image is mostly white/empty background. Please upload a <b>real photo of your car</b> — not a screenshot or product image.'});
                             return;
                         }
                     } catch (e) { /* canvas sampling failed, skip */ }
