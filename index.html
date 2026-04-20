@@ -3621,7 +3621,7 @@
 
                 let result = await resp.json();
 
-                // NEW: submit returned response_url → poll until complete (up to 4 min)
+                // Poll until complete, then pick best candidate
                 if (result.success && result.response_url && !result.result_url) {
                     const startedAt = Date.now();
                     const POLL_TIMEOUT_MS = 4 * 60 * 1000;
@@ -3636,6 +3636,7 @@
                             const pollData = await pollResp.json();
                             if (pollData.status === 'completed' && pollData.result_url) {
                                 result.result_url = pollData.result_url;
+                                result.candidate_urls = pollData.candidate_urls || [pollData.result_url];
                                 break;
                             }
                             if (pollData.status === 'failed') {
@@ -3651,6 +3652,26 @@
                         result.error_code = 'timeout';
                         result.error = 'AI job exceeded 4 minutes';
                     }
+                }
+
+                // Pick best candidate by aspect-ratio match to source car photo.
+                // When Gemini hallucinates a collage output, it's typically square
+                // while the correct scene-preserving output matches input aspect.
+                if (result.candidate_urls && result.candidate_urls.length > 1) {
+                    try {
+                        const carImg = new Image();
+                        await new Promise(r => { carImg.onload = r; carImg.onerror = r; carImg.src = lastUploadedPhoto; });
+                        const targetAspect = carImg.naturalWidth / Math.max(1, carImg.naturalHeight);
+                        const scored = await Promise.all(result.candidate_urls.map(u => new Promise(res => {
+                            const i = new Image(); i.crossOrigin = 'anonymous';
+                            i.onload = () => res({url: u, aspect: i.naturalWidth / Math.max(1, i.naturalHeight)});
+                            i.onerror = () => res({url: u, aspect: 1.0});
+                            i.src = u;
+                        })));
+                        scored.sort((a,b) => Math.abs(a.aspect - targetAspect) - Math.abs(b.aspect - targetAspect));
+                        console.log('[FW] candidate selection:', {target: targetAspect, scored});
+                        result.result_url = scored[0].url;
+                    } catch(e) { console.warn('candidate selection failed', e); }
                 }
 
                 if (result.success && result.result_url) {

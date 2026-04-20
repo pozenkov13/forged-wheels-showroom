@@ -41,17 +41,20 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    # Nano Banana Pro (Gemini 3) responds to explicit scene framing.
-    # The reference card is labeled "WHEEL DESIGN REFERENCE" — Gemini
-    # treats it unambiguously as a reference, not as output content.
     return (
-        "The first image is the main photograph of a car. The second image "
-        "is a design reference card labeled 'WHEEL DESIGN REFERENCE' — it "
-        "shows a wheel rim on gray background. Replace the wheel rims on "
-        "the car in the first image with rims that exactly match the design, "
-        "spoke pattern, color, finish, and brake caliper color shown in the "
-        "reference card. Output the full car photograph with only the wheels "
-        "changed — do not output the reference card."
+        "The first image is the main photograph of a car. "
+        "The second image is a design reference card labeled 'WHEEL DESIGN "
+        "REFERENCE' — it shows a wheel rim on gray background. "
+        "Your task: output a single photograph that is IDENTICAL to the first "
+        "image in every way — same car, same body, same paint color, same "
+        "windows, same background, same lighting, same composition, same "
+        "aspect ratio — EXCEPT the car's wheel rims are replaced with rims "
+        "matching the design, spoke pattern, color, finish, and brake caliper "
+        "color shown in the reference card. "
+        "Do NOT output the reference card. Do NOT create a collage or "
+        "side-by-side composition. Do NOT add text or labels. "
+        "The output is ONE photograph of the car from the first image with "
+        "only the wheels changed."
     )
 
 
@@ -244,7 +247,7 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def submit_nano_banana_edit(car_url, wheel_url, prompt):
+def submit_nano_banana_edit(car_url, wheel_url, prompt, num_images=2):
     """Submit Nano Banana Pro (Gemini 3 Pro Image) edit.
 
     A/B test (20/04) vs FLUX Kontext Max Multi on Tesla Model 3:
@@ -252,9 +255,11 @@ def submit_nano_banana_edit(car_url, wheel_url, prompt):
     - Nano Banana + labeled reference card: exact Diamond Cut design
       including brake caliper color. Wins on product fidelity.
 
-    The key unlock was the 'WHEEL DESIGN REFERENCE' text label on the
-    reference card (see prepare_wheel_reference). Without it, Gemini
-    outputs the reference wheel as a closeup instead of the scene.
+    Edge case observed on action/motion shots (Mercedes driving):
+    Gemini sometimes outputs the reference card instead of the scene.
+    Mitigation: request 2 variants and let the client pick the one
+    whose aspect ratio is closest to the original car photo (wrong
+    outputs are typically square; right outputs match input aspect).
     """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
@@ -263,7 +268,7 @@ def submit_nano_banana_edit(car_url, wheel_url, prompt):
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
-            "num_images": 1,
+            "num_images": num_images,
             "output_format": "jpeg",
         },
         headers=headers,
@@ -308,8 +313,9 @@ def poll_fal(response_url):
             rr = requests.get(response_url, headers=headers, timeout=10)
             result = rr.json() if rr.content else {}
             if rr.status_code == 200 and "images" in result and result["images"]:
-                return "completed", {"result_url": result["images"][0]["url"]}
-            # status COMPLETED but no images → validation or model error
+                # Return ALL candidate URLs — client picks the best by aspect ratio
+                urls = [im["url"] for im in result["images"] if im.get("url")]
+                return "completed", {"result_url": urls[0], "candidate_urls": urls}
             detail = result.get("detail") or result.get("error") or f"unexpected_{list(result.keys())}"
             return "failed", {"error": str(detail)[:200]}
         except Exception as e:
@@ -373,11 +379,12 @@ class handler(BaseHTTPRequestHandler):
                 wheel_display_name = "Your custom wheel"
                 prompt = (
                     "The first image is the main photograph of a car. The second "
-                    "image shows a wheel that the user wants installed. Replace "
-                    "the wheel rims on the car in the first image with rims that "
-                    "exactly match the design, spoke pattern, color, and finish "
-                    "of the wheel shown in the second image. Output the full car "
-                    "photograph with only the wheels changed."
+                    "image shows a wheel rim that the user wants installed. "
+                    "Output a single photograph IDENTICAL to the first image — "
+                    "same car, body, paint, background, lighting, composition, "
+                    "aspect ratio — EXCEPT the wheel rims match the design of "
+                    "the wheel in the second image. Do NOT create a collage or "
+                    "composition. Do NOT output the reference."
                 )
             else:
                 catalog = load_catalog()
