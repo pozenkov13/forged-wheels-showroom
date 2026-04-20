@@ -3563,7 +3563,9 @@
         }
 
         async function runAIInpainting(wheelId) {
-            if (!lastUploadedPhoto || !wheelId || detectedWheelPositions.length === 0) return;
+            if (!lastUploadedPhoto || !wheelId) return;
+            // Note: we no longer require detectedWheelPositions — the server-side
+            // Florence-2 pipeline re-detects on its own after auto-cropping.
 
             // Cleanup any status bars from detection phase
             document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
@@ -3616,6 +3618,10 @@
                             `;
                             canvasArea.appendChild(banner);
                             setTimeout(() => banner.remove(), 4000);
+                            // Soft warning if Florence couldn't see wheels clearly
+                            if (result.soft_warning) {
+                                setTimeout(() => showToast(result.soft_warning, 'warning', 5000), 1200);
+                            }
                         }, 400);
                     };
                     tmpImg.onerror = () => {
@@ -3628,33 +3634,56 @@
                     tmpImg.src = result.result_url;
                 } else {
                     removeProcessingOverlay();
-                    const banner = document.createElement('div');
-                    banner.className = 'ai-status-bar';
-                    banner.style.background = 'rgba(180,40,40,0.9)';
-                    banner.innerHTML = `
-                        <div class="ai-status-icon">⚠️</div>
-                        <div class="ai-status-text">AI rendering unavailable. Try again.</div>
-                    `;
-                    canvasArea.appendChild(banner);
-                    setTimeout(() => banner.remove(), 4000);
+                    // Map server error_code → user-facing message
+                    const codeMap = {
+                        'no_car': {
+                            type: 'error',
+                            msg: 'We couldn\'t find a car in this photo. Please upload a <b>real photo of your vehicle</b> — a side view or 3/4 angle works best. Screenshots of websites usually don\'t work.',
+                            duration: 8000
+                        },
+                        'timeout': {
+                            type: 'error',
+                            msg: 'The AI took too long. This usually means the image is too complex. Try a clearer side-view photo.',
+                            duration: 6000
+                        },
+                        'wheel_not_found': {
+                            type: 'error',
+                            msg: 'Selected wheel design not found. Please pick another from the shelf.',
+                            duration: 5000
+                        },
+                        'ai_error': {
+                            type: 'error',
+                            msg: 'The AI couldn\'t process this image. Try a different photo or a different wheel design.',
+                            duration: 6000
+                        },
+                        'missing_fields': {
+                            type: 'error',
+                            msg: 'Something went wrong with the request. Please refresh the page and try again.',
+                            duration: 5000
+                        },
+                        'config': {
+                            type: 'error',
+                            msg: 'Service temporarily unavailable. Our team has been notified.',
+                            duration: 5000
+                        }
+                    };
+                    const info = codeMap[result.error_code] || {
+                        type: 'error',
+                        msg: result.error || 'AI rendering failed. Please try again in a moment.',
+                        duration: 5000
+                    };
+                    showToast(info.msg, info.type, info.duration);
                 }
             } catch (err) {
                 removeProcessingOverlay();
                 console.error('Inpaint error:', err);
-                // Specific error messages based on error type
-                let msg = 'AI rendering failed. Please try again.';
+                let msg = 'Connection issue. Please check your internet and try again.';
                 if (err && err.message) {
                     const m = err.message.toLowerCase();
                     if (m.includes('timeout') || m.includes('timed out')) {
-                        msg = 'AI took too long (>60s). This usually means the image is too large or too complex. Try a simpler side-view photo of your car.';
+                        msg = 'Request timed out. The AI service is busy — try again in a moment.';
                     } else if (m.includes('fetch') || m.includes('network') || m.includes('failed to fetch')) {
-                        msg = 'Connection issue with the AI server. Check your internet and try again in a moment.';
-                    } else if (m.includes('401') || m.includes('403') || m.includes('unauthorized')) {
-                        msg = 'AI service authorization issue. Our team has been notified.';
-                    } else if (m.includes('429') || m.includes('rate')) {
-                        msg = 'Too many requests. Please wait 30 seconds and try again.';
-                    } else if (m.includes('500') || m.includes('503')) {
-                        msg = 'AI service temporarily down. Try again in 1-2 minutes.';
+                        msg = 'Can\'t reach the AI server. Check your internet connection and try again.';
                     }
                 }
                 showToast(msg, 'error', 7000);
