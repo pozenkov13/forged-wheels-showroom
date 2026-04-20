@@ -314,8 +314,14 @@ class handler(BaseHTTPRequestHandler):
             wheel_labels = {"wheel", "tire", "rim", "alloy wheel", "car wheel"}
             wheels_found = florence_detect(car_url_for_gemini, wheel_labels, timeout_s=35)
 
-            if not cars and not wheels_found:
-                # Nothing car-like AND nothing wheel-like found — reject early
+            if not cars:
+                # Hard rule: no car detected → cannot swap wheels INTO nothing.
+                # Check if it's a wheel-only image (user confused car vs wheel upload zone).
+                if wheels_found and not is_custom:
+                    return self._error(
+                        422, "wheel_instead_of_car",
+                        "This looks like a photo of a wheel, not a car. To try a custom wheel, use the WHEEL button on the shelf. To continue, upload a photo of your car."
+                    )
                 return self._error(
                     422, "no_car",
                     "We couldn't detect a car in this photo. Please upload a real photo of your vehicle — a clear side view or 3/4 angle works best."
