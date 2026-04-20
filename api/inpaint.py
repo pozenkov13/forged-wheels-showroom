@@ -41,15 +41,12 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    # IMAGE 2 is always a small wheel on gray background — a reference card,
-    # not content to output. Make this explicit to Gemini.
+    # FLUX Kontext prefers short, direct, imperative prompts.
+    # It handles image-1-as-base + image-2-as-reference natively.
     return (
-        "IMAGE 1 is a photograph of a car. IMAGE 2 is a small wheel-design "
-        "reference card (wheel centered on solid gray background). "
-        "Replace the car's wheel rims in IMAGE 1 with rims matching IMAGE 2's "
-        "spoke pattern, color, and finish. Output must match IMAGE 1's "
-        "dimensions and composition exactly — the car in its original scene, "
-        "with only the rims swapped. Do NOT output the gray reference card."
+        "Replace the car's wheel rims with the wheel design from the second "
+        "reference image. Keep the car body, paint color, windows, background, "
+        "and camera angle unchanged."
     )
 
 
@@ -216,20 +213,23 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def submit_nano_banana_edit(car_url, wheel_url, prompt):
-    """Submit Nano Banana Pro (Gemini 3 Pro Image) job — returns response_url WITHOUT waiting.
-    Client polls /api/inpaint?poll=<url> afterwards. This avoids Vercel Hobby 60s cap.
+def submit_kontext_edit(car_url, wheel_url, prompt):
+    """Submit FLUX Pro Kontext Max multi-image edit — handles reference-based
+    image editing much better than Nano Banana Pro for studio-style photos.
+    Returns response_url WITHOUT waiting; client polls afterwards.
     """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
     submit_resp = requests.post(
-        "https://queue.fal.run/fal-ai/nano-banana-pro/edit",
+        "https://queue.fal.run/fal-ai/flux-pro/kontext/max/multi",
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
+            "guidance_scale": 3.5,
             "num_images": 1,
             "output_format": "jpeg",
+            "aspect_ratio": "match_input_image",
         },
         headers=headers,
         timeout=20
@@ -245,21 +245,42 @@ def submit_nano_banana_edit(car_url, wheel_url, prompt):
 def poll_fal(response_url):
     """Single poll to fal.ai. Returns (status, data) where status is one of:
     'in_progress', 'completed', 'failed'.
+
+    fal.ai has two URL conventions:
+    - Nano Banana: polling response_url returns final result directly when ready
+    - FLUX Kontext: must check status_url first, then fetch result_url when COMPLETED
     """
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}"}
+
+    # First check status via /status endpoint (works for all fal.ai queue jobs)
+    status_url = response_url.rstrip("/") + "/status"
     try:
-        r = requests.get(response_url, headers=headers, timeout=10)
-    except Exception as e:
-        return "in_progress", None  # retry
-    if r.status_code != 200:
+        sr = requests.get(status_url, headers=headers, timeout=10)
+    except Exception:
         return "in_progress", None
-    result = r.json()
-    if result.get("status") in ("IN_QUEUE", "IN_PROGRESS"):
+    if sr.status_code != 200:
         return "in_progress", None
-    if "images" in result and result["images"]:
-        return "completed", {"result_url": result["images"][0]["url"]}
-    return "failed", {"error": f"unexpected_{list(result.keys())}"}
+    sd = sr.json()
+    st = sd.get("status", "")
+
+    if st in ("IN_QUEUE", "IN_PROGRESS", ""):
+        return "in_progress", None
+    if st in ("FAILED", "ERROR"):
+        return "failed", {"error": sd.get("error", "job_failed")}
+    if st == "COMPLETED":
+        # Fetch actual result
+        try:
+            rr = requests.get(response_url, headers=headers, timeout=10)
+            if rr.status_code == 200:
+                result = rr.json()
+                if "images" in result and result["images"]:
+                    return "completed", {"result_url": result["images"][0]["url"]}
+                return "failed", {"error": f"no_images_{list(result.keys())}"}
+        except Exception:
+            pass
+        return "in_progress", None
+    return "in_progress", None
 
 
 class handler(BaseHTTPRequestHandler):
@@ -317,13 +338,9 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "IMAGE 1 is a photograph of a car. IMAGE 2 is a wheel-design "
-                    "reference card (wheel centered on solid gray background). "
-                    "Replace the car's wheel rims in IMAGE 1 with rims matching "
-                    "IMAGE 2's spoke pattern, color, and finish. Output must match "
-                    "IMAGE 1's dimensions and composition exactly — the car in its "
-                    "original scene, with only the rims swapped. Do NOT output the "
-                    "gray reference card."
+                    "Replace the car's wheel rims with the wheel design from the "
+                    "second reference image. Keep the car body, paint color, "
+                    "windows, background, and camera angle unchanged."
                 )
             else:
                 catalog = load_catalog()
@@ -401,7 +418,7 @@ class handler(BaseHTTPRequestHandler):
             wheel_ref_bytes = prepare_wheel_reference(wheel_bytes)
             wheel_url = upload_to_fal(wheel_ref_bytes, f"{wheel_id}_ref.jpg", "image/jpeg")
 
-            response_url, error = submit_nano_banana_edit(car_url_for_gemini, wheel_url, prompt)
+            response_url, error = submit_kontext_edit(car_url_for_gemini, wheel_url, prompt)
 
             if error:
                 return self._error(500, "ai_error",
@@ -411,7 +428,7 @@ class handler(BaseHTTPRequestHandler):
                 "success": True,
                 "response_url": response_url,
                 "wheel_applied": wheel_display_name,
-                "model": "nano-banana-pro/edit",
+                "model": "flux-pro/kontext/max/multi",
                 "is_custom": is_custom,
                 "soft_warning": soft_warning,
                 "diagnostics": {
