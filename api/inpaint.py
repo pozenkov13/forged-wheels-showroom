@@ -41,13 +41,15 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
-    # Tight prompt — Gemini 3 Pro Image takes longer with verbose prompts.
-    # Key signal: output = IMAGE 1 (car scene), IMAGE 2 = reference only.
+    # IMAGE 2 is always a small wheel on gray background — a reference card,
+    # not content to output. Make this explicit to Gemini.
     return (
-        "Output IMAGE 1 (the car photo) with its wheel rims replaced by the "
-        "design from IMAGE 2. Keep the car body, paint, windows, lighting, "
-        "shadows, background, and camera angle identical to IMAGE 1. Do not "
-        "output a wheel closeup — the output is the full car scene."
+        "IMAGE 1 is a photograph of a car. IMAGE 2 is a small wheel-design "
+        "reference card (wheel centered on solid gray background). "
+        "Replace the car's wheel rims in IMAGE 1 with rims matching IMAGE 2's "
+        "spoke pattern, color, and finish. Output must match IMAGE 1's "
+        "dimensions and composition exactly — the car in its original scene, "
+        "with only the rims swapped. Do NOT output the gray reference card."
     )
 
 
@@ -84,6 +86,33 @@ def preprocess_image(image_bytes, max_side=2500):
         return buf.getvalue(), w, h
     except Exception:
         return image_bytes, None, None
+
+
+def prepare_wheel_reference(wheel_bytes):
+    """Composite the wheel PNG onto a distinctive gray background so Gemini
+    never mistakes it for the output image. Also downsizes to 600x600 to signal
+    'this is a small reference card, not the base image'.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return wheel_bytes
+
+    try:
+        wheel = Image.open(BytesIO(wheel_bytes))
+        if wheel.mode != "RGBA":
+            wheel = wheel.convert("RGBA")
+        # Fit wheel into 500x500 box (keep aspect), place on 600x600 gray canvas
+        wheel.thumbnail((500, 500), Image.LANCZOS)
+        canvas = Image.new("RGB", (600, 600), (64, 64, 64))  # dark neutral gray
+        wx = (600 - wheel.width) // 2
+        wy = (600 - wheel.height) // 2
+        canvas.paste(wheel, (wx, wy), wheel if wheel.mode == "RGBA" else None)
+        buf = BytesIO()
+        canvas.save(buf, format="JPEG", quality=92)
+        return buf.getvalue()
+    except Exception:
+        return wheel_bytes
 
 
 def crop_to_bbox(image_bytes, bbox, padding_ratio=0.10):
@@ -288,10 +317,13 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "Output IMAGE 1 (the car photo) with its wheel rims replaced by the "
-                    "design from IMAGE 2. Keep the car body, paint, windows, lighting, "
-                    "shadows, background, and camera angle identical to IMAGE 1. Do not "
-                    "output a wheel closeup — the output is the full car scene."
+                    "IMAGE 1 is a photograph of a car. IMAGE 2 is a wheel-design "
+                    "reference card (wheel centered on solid gray background). "
+                    "Replace the car's wheel rims in IMAGE 1 with rims matching "
+                    "IMAGE 2's spoke pattern, color, and finish. Output must match "
+                    "IMAGE 1's dimensions and composition exactly — the car in its "
+                    "original scene, with only the rims swapped. Do NOT output the "
+                    "gray reference card."
                 )
             else:
                 catalog = load_catalog()
@@ -363,10 +395,11 @@ class handler(BaseHTTPRequestHandler):
                 soft_warning = None
 
             # ─────────────────────────────────────────────────────
-            # Stage 4: Upload wheel ref + submit Gemini job (no wait!)
-            # Returns response_url — client polls via action=poll.
+            # Stage 4: Prepare wheel reference (composite on gray bg so
+            # Gemini doesn't confuse it with the car scene) + submit
             # ─────────────────────────────────────────────────────
-            wheel_url = upload_to_fal(wheel_bytes, f"{wheel_id}.png", "image/png")
+            wheel_ref_bytes = prepare_wheel_reference(wheel_bytes)
+            wheel_url = upload_to_fal(wheel_ref_bytes, f"{wheel_id}_ref.jpg", "image/jpeg")
 
             response_url, error = submit_nano_banana_edit(car_url_for_gemini, wheel_url, prompt)
 
