@@ -41,19 +41,13 @@ def load_catalog():
 
 
 def build_wheel_prompt(wheel):
+    # Tight prompt — Gemini 3 Pro Image takes longer with verbose prompts.
+    # Key signal: output = IMAGE 1 (car scene), IMAGE 2 = reference only.
     return (
-        "OUTPUT REQUIREMENT: the output image MUST be a modified copy of IMAGE 1 "
-        "(the car photograph). IMAGE 2 is a wheel-design reference ONLY — do NOT "
-        "copy it as the output. "
-        "\n\nTASK: in IMAGE 1, replace ONLY the two visible wheel rims on the car "
-        "with rims whose spoke pattern, color, and finish match IMAGE 2. Scale the "
-        "new rims to exactly fit the existing wheel wells. "
-        "\n\nPRESERVE FROM IMAGE 1 (must stay pixel-identical): car body shape, "
-        "paint color, windows, reflections, lighting, shadows, ground, background, "
-        "camera angle, framing, aspect ratio. "
-        "\n\nDO NOT: output a wheel closeup, output IMAGE 2, change the car, crop "
-        "the scene, or add watermarks. The output must look like the original "
-        "IMAGE 1 photograph with only the wheel designs swapped."
+        "Output IMAGE 1 (the car photo) with its wheel rims replaced by the "
+        "design from IMAGE 2. Keep the car body, paint, windows, lighting, "
+        "shadows, background, and camera angle identical to IMAGE 1. Do not "
+        "output a wheel closeup — the output is the full car scene."
     )
 
 
@@ -139,7 +133,7 @@ def upload_to_fal(image_bytes, filename, content_type="image/jpeg"):
     return f"data:{content_type};base64,{b64}"
 
 
-def florence_detect(image_url, target_labels, timeout_s=50):
+def florence_detect(image_url, target_labels, timeout_s=15):
     """Run Florence-2 object detection. Returns list of dicts with x/y/w/h/label/confidence.
     target_labels: set of lowercase label names to keep (e.g. {"car", "truck", "vehicle"}).
     """
@@ -161,8 +155,8 @@ def florence_detect(image_url, target_labels, timeout_s=50):
 
     deadline = time.time() + timeout_s
     while time.time() < deadline:
-        time.sleep(2)
-        poll_resp = requests.get(response_url, headers=headers, timeout=30)
+        time.sleep(1)
+        poll_resp = requests.get(response_url, headers=headers, timeout=10)
         if poll_resp.status_code != 200:
             continue
         result = poll_resp.json()
@@ -216,10 +210,11 @@ def run_nano_banana_edit(car_url, wheel_url, prompt):
     if not response_url:
         return None, "no_response_url"
 
-    deadline = time.time() + 90
+    # Leave budget for Florence stages — Gemini gets ~45s
+    deadline = time.time() + 45
     while time.time() < deadline:
-        time.sleep(2)
-        poll_resp = requests.get(response_url, headers=headers, timeout=30)
+        time.sleep(1.5)
+        poll_resp = requests.get(response_url, headers=headers, timeout=10)
         if poll_resp.status_code != 200:
             continue
         result = poll_resp.json()
@@ -268,16 +263,10 @@ class handler(BaseHTTPRequestHandler):
                 wheel_bytes = base64.b64decode(custom_b64)
                 wheel_display_name = "Your custom wheel"
                 prompt = (
-                    "OUTPUT REQUIREMENT: the output image MUST be a modified copy of IMAGE 1 "
-                    "(the car photograph). IMAGE 2 is a wheel-design reference ONLY — do NOT "
-                    "copy it as the output. "
-                    "\n\nTASK: in IMAGE 1, replace ONLY the two visible wheel rims with rims "
-                    "whose spoke pattern, color, and finish match IMAGE 2. Scale to fit the "
-                    "existing wheel wells. "
-                    "\n\nPRESERVE FROM IMAGE 1: car body, paint, windows, reflections, lighting, "
-                    "shadows, ground, background, camera angle, framing. "
-                    "\n\nDO NOT output a wheel closeup or IMAGE 2 — the output must look like "
-                    "IMAGE 1 with only the wheel designs swapped."
+                    "Output IMAGE 1 (the car photo) with its wheel rims replaced by the "
+                    "design from IMAGE 2. Keep the car body, paint, windows, lighting, "
+                    "shadows, background, and camera angle identical to IMAGE 1. Do not "
+                    "output a wheel closeup — the output is the full car scene."
                 )
             else:
                 catalog = load_catalog()
@@ -299,36 +288,34 @@ class handler(BaseHTTPRequestHandler):
             car_url_full = upload_to_fal(image_bytes, "car.jpg", "image/jpeg")
 
             # ─────────────────────────────────────────────────────
-            # Stage 2: Detect "car" (isolates it from UI chrome etc.)
+            # Stage 2+3: Single Florence-2 call for BOTH car and wheels
+            # (saves ~15s vs running detection twice on Vercel Hobby 60s cap)
             # ─────────────────────────────────────────────────────
-            car_labels = {"car", "truck", "suv", "vehicle", "van", "pickup truck", "sports car", "sedan"}
-            cars = florence_detect(car_url_full, car_labels, timeout_s=40)
+            all_labels = {
+                "car", "truck", "suv", "vehicle", "van", "pickup truck", "sports car", "sedan",
+                "wheel", "tire", "rim", "alloy wheel", "car wheel",
+            }
+            detected = florence_detect(car_url_full, all_labels, timeout_s=20)
+            car_label_set = {"car", "truck", "suv", "vehicle", "van", "pickup truck", "sports car", "sedan"}
+            wheel_label_set = {"wheel", "tire", "rim", "alloy wheel", "car wheel"}
+            cars = [d for d in detected if d["label"] in car_label_set]
+            wheels_found = [d for d in detected if d["label"] in wheel_label_set]
 
             crop_used = False
             crop_info = None
             car_url_for_gemini = car_url_full
-            current_bytes = image_bytes
 
-            if cars:
+            # Auto-crop only if car takes <70% of frame (screenshot with UI chrome)
+            if cars and orig_w and orig_h:
                 big = biggest_bbox(cars)
-                # Only crop if car occupies <70% of image width OR <70% of height
-                # (otherwise cropping adds nothing but removes context)
-                if orig_w and orig_h:
-                    fill_w = big["w"] / orig_w
-                    fill_h = big["h"] / orig_h
-                    if fill_w < 0.70 or fill_h < 0.70:
-                        cropped_bytes, cw, ch = crop_to_bbox(image_bytes, big, padding_ratio=0.12)
-                        if cropped_bytes and cw and ch:
-                            current_bytes = cropped_bytes
-                            car_url_for_gemini = upload_to_fal(cropped_bytes, "car_cropped.jpg", "image/jpeg")
-                            crop_used = True
-                            crop_info = {"original": [orig_w, orig_h], "cropped": [cw, ch], "bbox": big}
-
-            # ─────────────────────────────────────────────────────
-            # Stage 3: Verify wheels are visible (soft check)
-            # ─────────────────────────────────────────────────────
-            wheel_labels = {"wheel", "tire", "rim", "alloy wheel", "car wheel"}
-            wheels_found = florence_detect(car_url_for_gemini, wheel_labels, timeout_s=35)
+                fill_w = big["w"] / orig_w
+                fill_h = big["h"] / orig_h
+                if fill_w < 0.70 or fill_h < 0.70:
+                    cropped_bytes, cw, ch = crop_to_bbox(image_bytes, big, padding_ratio=0.12)
+                    if cropped_bytes and cw and ch:
+                        car_url_for_gemini = upload_to_fal(cropped_bytes, "car_cropped.jpg", "image/jpeg")
+                        crop_used = True
+                        crop_info = {"original": [orig_w, orig_h], "cropped": [cw, ch], "bbox": big}
 
             if not cars:
                 # Hard rule: no car detected → cannot swap wheels INTO nothing.
