@@ -3579,13 +3579,28 @@
             }
         }
 
+        let aiInFlight = false;
         async function runAIInpainting(wheelId) {
             if (!lastUploadedPhoto || !wheelId) return;
             // Note: we no longer require detectedWheelPositions — the server-side
             // Florence-2 pipeline re-detects on its own after auto-cropping.
+            if (aiInFlight) {
+                showToast('Please wait for the current try-on to finish.', 'warning', 3500);
+                return;
+            }
+            aiInFlight = true;
+            try {
+                return await _runAIInpaintingImpl(wheelId);
+            } finally {
+                aiInFlight = false;
+            }
+        }
+        async function _runAIInpaintingImpl(wheelId) {
 
-            // Cleanup any status bars from detection phase
+            // Cleanup ALL leftover AI UI from previous attempts
             document.querySelectorAll('.ai-status-bar').forEach(el => { if (el._phaseTimers) el._phaseTimers.forEach(t => clearTimeout(t)); el.remove(); });
+            document.querySelectorAll('.ai-marker, .wheel-overlay').forEach(el => el.remove());
+            document.querySelectorAll('.fw-toast').forEach(el => el.remove());
 
             // Show fullscreen processing overlay
             showProcessingOverlay();
@@ -3745,21 +3760,24 @@
         }
 
         // After a successful AI render, make the result image the new source
-        // so next try-on runs on the already-modified car
+        // so next try-on runs on the already-modified car.
         async function updateSourceToCurrentImage(newImageUrl) {
             try {
-                // Fetch the AI-rendered image and convert to dataURL
                 const resp = await fetch(newImageUrl);
                 const blob = await resp.blob();
-                const reader = new FileReader();
-                reader.onload = () => {
-                    lastUploadedPhoto = reader.result;
-                    // Clear old detection so next wheel triggers fresh detection on new image
-                    detectedWheelPositions = [];
-                };
-                reader.readAsDataURL(blob);
+                await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        lastUploadedPhoto = reader.result;
+                        detectedWheelPositions = [];
+                        resolve();
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
             } catch (e) {
                 console.warn('Could not update source image for iterative try-on:', e);
+                // Fallback: keep original photo as base for next iteration
             }
         }
 
