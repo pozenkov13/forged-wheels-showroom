@@ -213,11 +213,20 @@ def biggest_bbox(bboxes):
     return max(bboxes, key=lambda b: b["w"] * b["h"])
 
 
-def submit_kontext_edit(car_url, wheel_url, prompt):
-    """Submit FLUX Pro Kontext Max multi-image edit — handles reference-based
-    image editing much better than Nano Banana Pro for studio-style photos.
-    Returns response_url WITHOUT waiting; client polls afterwards.
-    """
+def pick_aspect_ratio(w, h):
+    """Map (w,h) to closest FLUX Kontext allowed ratio."""
+    if not w or not h:
+        return "16:9"
+    r = w / h
+    candidates = [
+        (21/9, "21:9"), (16/9, "16:9"), (3/2, "3:2"), (4/3, "4:3"),
+        (1.0, "1:1"), (3/4, "3:4"), (2/3, "2:3"), (9/16, "9:16"), (9/21, "9:21"),
+    ]
+    return min(candidates, key=lambda c: abs(c[0] - r))[1]
+
+
+def submit_kontext_edit(car_url, wheel_url, prompt, aspect_ratio="16:9"):
+    """Submit FLUX Pro Kontext Max multi-image edit."""
     fal_key = get_fal_key()
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
 
@@ -226,9 +235,10 @@ def submit_kontext_edit(car_url, wheel_url, prompt):
         json={
             "image_urls": [car_url, wheel_url],
             "prompt": prompt,
-            "guidance_scale": 3.5,
+            "guidance_scale": 4.5,
             "num_images": 1,
             "output_format": "jpeg",
+            "aspect_ratio": aspect_ratio,
         },
         headers=headers,
         timeout=20
@@ -416,7 +426,12 @@ class handler(BaseHTTPRequestHandler):
             wheel_ref_bytes = prepare_wheel_reference(wheel_bytes)
             wheel_url = upload_to_fal(wheel_ref_bytes, f"{wheel_id}_ref.jpg", "image/jpeg")
 
-            response_url, error = submit_kontext_edit(car_url_for_gemini, wheel_url, prompt)
+            # Compute aspect ratio of the (possibly cropped) car image
+            car_w = (crop_info["cropped"][0] if crop_info else orig_w) or 16
+            car_h = (crop_info["cropped"][1] if crop_info else orig_h) or 9
+            ar = pick_aspect_ratio(car_w, car_h)
+
+            response_url, error = submit_kontext_edit(car_url_for_gemini, wheel_url, prompt, aspect_ratio=ar)
 
             if error:
                 return self._error(500, "ai_error",
