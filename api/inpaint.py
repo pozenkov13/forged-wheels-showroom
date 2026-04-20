@@ -89,6 +89,51 @@ def preprocess_image(image_bytes, max_side=2500):
         return image_bytes, None, None
 
 
+def detect_and_split_collage(result_bytes, source_aspect):
+    """Detect if Gemini output is a vertical 'before/after' collage instead of
+    a single scene, and if so, return only the bottom half (the modified version).
+
+    Heuristic: if output is significantly more vertical than source (e.g. source
+    is landscape 2.8:1, output is 1:1 or taller), it's almost certainly a collage.
+    In that case crop to the appropriate half.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return result_bytes, False
+
+    try:
+        img = Image.open(BytesIO(result_bytes))
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        w, h = img.size
+        out_aspect = w / max(1, h)
+        if not source_aspect:
+            return result_bytes, False
+
+        # Collage criterion: source is significantly wider than output.
+        # E.g. source 2.8 vs output 1.0 → ratio 2.8 → collage.
+        # Conservative threshold: source aspect must be at least 1.3x output aspect.
+        if source_aspect / out_aspect >= 1.3:
+            # Vertical collage: Gemini convention is usually "after" on bottom
+            half_h = h // 2
+            bottom = img.crop((0, half_h, w, h))
+            buf = BytesIO()
+            bottom.save(buf, format="JPEG", quality=92)
+            return buf.getvalue(), True
+        # Inverse collage (horizontal): source tall, output wider → crop right half
+        if out_aspect / source_aspect >= 1.3:
+            half_w = w // 2
+            right = img.crop((half_w, 0, w, h))
+            buf = BytesIO()
+            right.save(buf, format="JPEG", quality=92)
+            return buf.getvalue(), True
+
+        return result_bytes, False
+    except Exception:
+        return result_bytes, False
+
+
 def prepare_wheel_reference(wheel_bytes):
     """Compose the wheel PNG into a labeled reference card.
 

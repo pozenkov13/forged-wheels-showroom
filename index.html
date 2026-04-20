@@ -3655,8 +3655,6 @@
                 }
 
                 // Pick best candidate by aspect-ratio match to source car photo.
-                // When Gemini hallucinates a collage output, it's typically square
-                // while the correct scene-preserving output matches input aspect.
                 if (result.candidate_urls && result.candidate_urls.length > 1) {
                     try {
                         const carImg = new Image();
@@ -3672,6 +3670,46 @@
                         console.log('[FW] candidate selection:', {target: targetAspect, scored});
                         result.result_url = scored[0].url;
                     } catch(e) { console.warn('candidate selection failed', e); }
+                }
+
+                // Collage detection: if Gemini hallucinated a before/after collage,
+                // the output is much taller/squarer than source. Crop to the half
+                // with the modified wheels (conventionally the bottom or right half).
+                if (result.result_url) {
+                    try {
+                        const srcImg = new Image();
+                        await new Promise(r => { srcImg.onload = r; srcImg.onerror = r; srcImg.src = lastUploadedPhoto; });
+                        const outImg = new Image(); outImg.crossOrigin = 'anonymous';
+                        await new Promise(r => { outImg.onload = r; outImg.onerror = r; outImg.src = result.result_url; });
+
+                        const srcAspect = srcImg.naturalWidth / Math.max(1, srcImg.naturalHeight);
+                        const outAspect = outImg.naturalWidth / Math.max(1, outImg.naturalHeight);
+                        const ratio = srcAspect / outAspect;
+
+                        console.log('[FW] aspect check:', {srcAspect: srcAspect.toFixed(2), outAspect: outAspect.toFixed(2), ratio: ratio.toFixed(2)});
+
+                        if (ratio >= 1.3 || ratio <= 1/1.3) {
+                            // Collage detected — crop to expected half
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            if (ratio >= 1.3) {
+                                // Vertical collage (output taller than source).
+                                // "After" is conventionally bottom half.
+                                canvas.width = outImg.naturalWidth;
+                                canvas.height = Math.floor(outImg.naturalHeight / 2);
+                                ctx.drawImage(outImg, 0, canvas.height, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                            } else {
+                                // Horizontal collage (output wider). "After" on right half.
+                                canvas.width = Math.floor(outImg.naturalWidth / 2);
+                                canvas.height = outImg.naturalHeight;
+                                ctx.drawImage(outImg, canvas.width, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                            }
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                            result.result_url = dataUrl;
+                            result._was_collage = true;
+                            console.log('[FW] collage split applied, cropped to', canvas.width, 'x', canvas.height);
+                        }
+                    } catch (e) { console.warn('collage detection failed', e); }
                 }
 
                 if (result.success && result.result_url) {
