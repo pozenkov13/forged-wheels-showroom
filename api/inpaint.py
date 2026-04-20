@@ -428,25 +428,28 @@ class handler(BaseHTTPRequestHandler):
                         crop_used = True
                         crop_info = {"original": [orig_w, orig_h], "cropped": [cw, ch], "bbox": big}
 
-            if not cars:
-                # Hard rule: no car detected → cannot swap wheels INTO nothing.
-                # Check if it's a wheel-only image (user confused car vs wheel upload zone).
-                if wheels_found and not is_custom:
-                    return self._error(
-                        422, "wheel_instead_of_car",
-                        "This looks like a photo of a wheel, not a car. To try a custom wheel, use the WHEEL button on the shelf. To continue, upload a photo of your car."
-                    )
-                return self._error(
-                    422, "no_car",
-                    "We couldn't detect a car in this photo. Please upload a real photo of your vehicle — a clear side view or 3/4 angle works best."
-                )
+            soft_warning = None
 
-            if cars and not wheels_found:
-                # We see a car but no wheels — probably wrong angle (top-down, front-only, cropped)
-                # We still try — Gemini is smart — but warn with a soft message in metadata
+            # Only HARD reject when Florence finds wheels but NO car — strong
+            # signal the user uploaded a wheel-only product shot into the car slot.
+            if not cars and wheels_found and not is_custom:
+                # Extra safety: the wheels must occupy a large share of the image
+                # (otherwise Florence may just have confused UI chrome for wheels).
+                big_wheel = biggest_bbox(wheels_found)
+                if orig_w and orig_h:
+                    fill = (big_wheel["w"] * big_wheel["h"]) / (orig_w * orig_h)
+                    if fill > 0.25:
+                        return self._error(
+                            422, "wheel_instead_of_car",
+                            "This looks like a photo of a wheel, not a car. To try a custom wheel, use the WHEEL button on the shelf. To continue here, upload a photo of your car."
+                        )
+
+            # Otherwise proceed — Nano Banana Pro is smart enough to handle
+            # studio shots and unusual angles even when Florence-2 misses the car.
+            if not cars and not wheels_found:
+                soft_warning = "We couldn't detect a car with certainty, but we'll try anyway. If the result looks off, try a clearer side view."
+            elif cars and not wheels_found:
                 soft_warning = "Wheels are hard to see from this angle. If the result looks off, try a side view."
-            else:
-                soft_warning = None
 
             # ─────────────────────────────────────────────────────
             # Stage 4: Prepare wheel reference (composite on gray bg so
